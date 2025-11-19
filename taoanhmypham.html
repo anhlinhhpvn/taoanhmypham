@@ -1,0 +1,2313 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Photoshoot Generator Pro (Cosmetics Edition)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* --- CSS TỪ FILE TAOANHTHEOMUA.HTML --- */
+        body { background-color: #111827; color: #d1d5db; font-family: 'Inter', sans-serif; }
+        .cropper-container { margin: 0 auto; } /* Căn giữa cropper trong modal */
+        .form-input, select, textarea { display: block; width: 100%; padding: 0.75rem 1rem; background-color: #374151; border: 1px solid #4B5563; border-radius: 0.5rem; color: #F3F4F6; font-weight: 500; transition: border-color 0.2s, box-shadow 0.2s; }
+        .form-input:focus, select:focus, textarea:focus { outline: none; border-color: #FCD34D; box-shadow: 0 0 0 3px rgba(252, 211, 77, 0.3); }
+        .form-input:disabled, select:disabled, textarea:disabled, input[type=checkbox]:disabled + label { opacity: 0.6; cursor: not-allowed; }
+        .btn { padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 600; text-align: center; transition: all 0.3s; cursor: pointer; border: none; box-shadow: 0 4px 14px 0 rgba(0,0,0,0.1); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-primary { background-color: #FCD34D; color: #1F2937; }
+        .btn-primary:hover:not(:disabled) { background-color: #FBBF24; transform: translateY(-2px); box-shadow: 0 6px 16px 0 rgba(252, 211, 77, 0.2); }
+        .btn-secondary { background-color: #4B5563; color: #F3F4F6; }
+        .btn-secondary:hover:not(:disabled) { background-color: #6B7280; transform: translateY(-2px); }
+        .preset-model-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; border-color: transparent !important; box-shadow: none !important; }
+        .section-card { background-color: #1f2937; padding: 1.25rem; border-radius: 0.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,.1),0 2px 4px -2px rgba(0,0,0,.1); border: 1px solid #374151; }
+        .image-card { position: relative; width: 100%; aspect-ratio: 1 / 1; background-color: rgba(55, 65, 81, 0.3); border: 2px dashed #4b5563; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; text-align: center; transition: all 0.3s; }
+        .image-card.has-image { overflow: hidden; border-style: solid; }
+        .image-card:not(.disabled) { cursor: pointer; }
+        .image-card.dragover { border-color: #FCD34D !important; transform: scale(1.02); box-shadow: 0 0 15px rgba(252, 211, 77, 0.5); }
+        .loader { border: 4px solid #4b5563; border-top: 4px solid #FCD34D; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+        textarea, select { background-color: #374151; }
+        .result-item .download-btn, .history-item .download-btn { position: absolute; top: 0.5rem; right: 0.5rem; width: 2.5rem; height: 2.5rem; background-color: rgba(0, 0, 0, 0.5); color: white; border: none; border-radius: 9999px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 20; transition: background-color 0.2s ease-in-out, transform 0.2s ease-in-out; }
+        .result-item .regenerate-btn { position: absolute; top: 0.5rem; left: 0.5rem; width: 2.5rem; height: 2.5rem; background-color: rgba(0, 0, 0, 0.5); color: white; border: none; border-radius: 9999px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 20; transition: background-color 0.2s ease-in-out, transform 0.2s ease-in-out; }
+        .result-item .download-btn:hover, .history-item .download-btn:hover, .result-item .regenerate-btn:hover { background-color: rgba(0, 0, 0, 0.75); transform: scale(1.1); }
+        .result-gallery img, .history-gallery-grid img { border-radius: 0.375rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2), 0 2px 4px -2px rgba(0,0,0,0.2); transition: transform 0.3s ease; cursor: pointer; }
+        .result-gallery img:hover, .history-gallery-grid img:hover { transform: scale(1.03); }
+        .modal { position: fixed; z-index: 1000; inset: 0; background-color: rgba(0, 0, 0, 0.85); display: flex; align-items: center; justify-content: center; animation: fadeIn 0.3s; }
+        .modal-content { max-width: 90vw; max-height: 85vh; object-fit: contain; transition: transform 0.2s ease-in-out; cursor: zoom-in; }
+        .modal-content.zoomed { max-width: none; max-height: none; cursor: zoom-out; }
+        .modal-close { position: absolute; top: 20px; right: 30px; font-size: 30px; color: #d1d5db; cursor: pointer; z-index: 1002; }
+        .lightbox-nav { position: absolute; top: 50%; transform: translateY(-50%); background-color: rgba(30,41,59,.55); color: white; border: none; font-size: 2rem; width: 42px; height: 64px; cursor: pointer; border-radius: 0.5rem; z-index: 1001; transition: background-color 0.2s; }
+        .lightbox-nav:hover { background-color: rgba(30,41,59,.8); }
+        .lightbox-nav.prev { left: 1rem; }
+        .lightbox-nav.next { right: 1rem; }
+        .image-card .action-btn { position: absolute; z-index: 20; background-color: rgba(0, 0, 0, 0.5); color: white; border: none; border-radius: 9999px; width: 2rem; height: 2rem; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease-in-out; }
+        .image-card .action-btn:hover { background-color: rgba(0, 0, 0, 0.75); transform: scale(1.1); }
+        .image-card .crop-btn { top: 0.5rem; left: 0.5rem; }
+        .lightbox-download { position: absolute; top: 14px; left: 50%; transform: translateX(-50%); padding: 12px 20px; border-radius: 12px; background: #2563eb; color: #fff; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; box-shadow: 0 8px 22px rgba(37, 99, 235, .45); cursor: pointer; z-index: 1001; transition: background-color 0.2s, transform 0.2s; }
+        .lightbox-download:hover { filter: brightness(1.08); }
+        .preset-model-btn.selected { border-color: #FCD34D !important; box-shadow: 0 0 10px rgba(252, 211, 77, 0.5); transform: scale(1.05); }
+
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="max-w-screen-2xl mx-auto" id="app-container"> <!-- Đã mở rộng container để chứa 5 cột đẹp hơn -->
+        <header class="text-center mb-8 md:mb-12">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-yellow-400 to-yellow-500">AI Product Photoshoot Pro</h1>
+            <p class="text-lg md:text-xl text-gray-400 mt-2">Tạo ảnh quảng cáo mỹ phẩm chuyên nghiệp. Phiên bản Cosmetics.</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8 max-w-7xl mx-auto"> <!-- Giới hạn chiều rộng phần nhập liệu cho gọn -->
+            <!-- Cột 1: Người Mẫu & Sản Phẩm -->
+            <div class="section-card">
+                <h2 class="text-xl font-bold text-yellow-400 mb-1">1. Người Mẫu & Sản Phẩm</h2>
+                <p class="text-sm text-gray-400 mb-4">Tải ảnh người mẫu và sản phẩm của bạn.</p>
+                <div class="space-y-4">
+                    <!-- Model Upload -->
+                    <div id="model-upload-container">
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Tải ảnh của bạn:</label>
+                        <div id="model-upload" class="image-card">
+                            <div class="text-gray-400 px-4">
+                                <i class="fa-solid fa-user text-3xl text-gray-500"></i>
+                                <p class="mt-1 text-sm">Kéo & thả ảnh người mẫu vào đây</p>
+                            </div>
+                            <img id="model-preview" class="absolute inset-0 w-full h-full object-contain hidden" alt="Xem trước ảnh người mẫu">
+                            <button id="model-delete-btn" class="hidden absolute top-2 right-2 z-20 bg-red-600/80 hover:bg-red-500 rounded-full w-7 h-7 flex items-center justify-center text-white transition-all">
+                                <i class="fa-solid fa-xmark text-sm"></i>
+                            </button>
+                            <button id="model-crop-btn" class="hidden action-btn crop-btn" title="Cắt ảnh">
+                                <i class="fa-solid fa-crop-simple"></i>
+                            </button>
+                        </div>
+                        <input type="file" id="model-input" class="hidden" accept="image/*">
+                    </div>
+                    <!-- Preset Models -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Hoặc chọn mẫu có sẵn:</label>
+                        <div id="preset-model-buttons" class="grid grid-cols-5 gap-2">
+                            <!-- Preset model buttons will be injected here -->
+                        </div>
+                    </div>
+                    <!-- Product Image -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Ảnh sản phẩm (Nước hoa/Mỹ phẩm)</label>
+                        <div id="product-upload" class="image-card">
+                            <div class="text-gray-400 px-2">
+                                <i class="fa-solid fa-spray-can-sparkles text-3xl text-gray-500"></i>
+                                <p class="mt-1 text-xs">Tải ảnh sản phẩm (đã tách nền)</p>
+                            </div>
+                            <img id="product-preview" class="absolute inset-0 w-full h-full object-contain hidden" alt="Xem trước sản phẩm">
+                            <button id="product-delete-btn" class="hidden absolute top-2 right-2 z-20 bg-red-600/80 hover:bg-red-500 rounded-full w-7 h-7 flex items-center justify-center text-white transition-all">
+                                <i class="fa-solid fa-xmark text-sm"></i>
+                            </button>
+                            <button id="product-crop-btn" class="hidden action-btn crop-btn" title="Cắt ảnh">
+                                <i class="fa-solid fa-crop-simple"></i>
+                            </button>
+                        </div>
+                        <input type="file" id="product-input" class="hidden" accept="image/*">
+                    </div>
+                    <!-- Loại sản phẩm (chai lẻ / gift set) -->
+                    <div class="mt-3">
+                        <label for="product-type" class="block text-sm font-medium text-gray-300 mb-1">
+                            Loại sản phẩm
+                        </label>
+                        <select id="product-type" class="form-input" disabled>
+                            <option value="auto" selected>Tải ảnh sản phẩm để phân tích...</option>
+                            <option value="single_bottle">1 chai lẻ</option>
+                            <option value="giftset_2">Gift set – 2 chai</option>
+                            <option value="giftset_3">Gift set – 3 chai</option>
+                            <option value="giftset_4">Gift set – 4 chai</option>
+                            <option value="giftset_5">Gift set – 5 chai</option>
+                            <option value="giftset_6">Gift set – 6 chai</option>
+                        </select>
+                        <p class="mt-1 text-xs text-gray-500">AI sẽ tự động phân tích ảnh. Bạn có thể chỉnh lại nếu cần.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cột 2: Bối cảnh & Phong cách -->
+            <div class="section-card">
+                <h2 class="text-xl font-bold text-yellow-400 mb-1">2. Bối cảnh & Phong cách</h2>
+                <p class="text-sm text-gray-400 mb-4">Chọn chủ đề, phong cách và các yếu tố hình ảnh.</p>
+                <div class="space-y-4">
+                    <!-- Bối cảnh -->
+                    <div>
+                        <label for="scene" class="block text-sm font-medium text-gray-300">Chủ đề / Bối cảnh:</label>
+                        <select id="scene" class="form-input mt-1">
+                            <!-- Options will be populated by JS -->
+                        </select>
+                    </div>
+                    <!-- Ghi chú ưu tiên cao -->
+                    <div>
+                        <label for="prompt-input" class="block text-sm font-medium text-gray-300">Ghi chú ưu tiên cao (Ghi đè luật):</label>
+                        <textarea id="prompt-input" rows="4" placeholder="VD: 'Model must wear a red dress', 'The product must be held in the left hand'..." class="form-input mt-1"></textarea>
+                    </div>
+                     <!-- Tên File -->
+                     <div>
+                        <label for="product-file-name" class="block text-sm font-medium text-gray-300">Tên File cho bộ ảnh (Tự động):</label>
+                        <input id="product-file-name" type="text" placeholder="Tự động hoặc nhập tay" class="form-input mt-1">
+                        <p class="text-xs text-gray-500 mt-1">Dùng để đặt tên file khi tải về.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cột 3: Tùy Chọn & Tạo Ảnh -->
+            <div class="section-card">
+                <h2 class="text-xl font-bold text-yellow-400 mb-1">3. Tùy Chọn & Tạo Ảnh</h2>
+                <p class="text-sm text-gray-400 mb-4">Tinh chỉnh và bắt đầu tạo bộ ảnh.</p>
+                <div class="space-y-4">
+                    <!-- (MỚI) Lựa chọn khổ ảnh -->
+                    <div>
+                        <label for="aspect-ratio" class="block text-sm font-medium text-gray-300">Khổ ảnh:</label>
+                        <select id="aspect-ratio" class="form-input mt-1">
+                            <option value="3:4" selected>3:4 (Dọc - Bài đăng, cố định)</option>
+                        </select>
+                    </div>
+                    <!-- Phong cách ảnh -->
+                    <div>
+                        <label for="photo-style" class="block text-sm font-medium text-gray-300">Phong cách ảnh:</label>
+                        <select id="photo-style" class="form-input mt-1">
+                            <option value="commercial_bright">Commercial (Sáng &amp; Rõ nét)</option>
+                            <option value="cinematic_moody">Cinematic (Tâm trạng &amp; Điện ảnh)</option>
+                            <option value="editorial_fashion">Editorial (Tạp chí thời trang)</option>
+                            <option value="minimalist_clean">Minimalist (Tối giản &amp; Sạch sẽ)</option>
+                            <option value="vintage_film">Vintage (Màu film cổ điển)</option>
+                        </select>
+                    </div>
+                    <!-- Đóng dấu ảnh -->
+                    <div class="space-y-2 rounded-md bg-gray-900/50 p-3 border border-gray-700/50">
+                        <div class="flex items-center">
+                            <input id="watermark-enabled" type="checkbox" class="h-4 w-4 rounded border-gray-600 bg-gray-700 text-yellow-400 focus:ring-yellow-500">
+                            <label for="watermark-enabled" class="ml-2 block text-sm font-medium text-gray-300">Bật đóng dấu ảnh (watermark)</label>
+                        </div>
+                        <input id="watermark-text" type="text" value="Top-Trendy.Cz" placeholder="Nội dung dấu, VD: 'My Brand'" class="form-input mt-1">
+                    </div>
+                    <!-- API Key -->
+                    <div>
+                        <label for="api-key-input" class="block text-sm font-medium text-gray-300">API Key (Tùy chọn):</label>
+                        <input type="password" id="api-key-input" placeholder="Để trống để dùng API mặc định" class="form-input mt-1">
+                    </div>
+                    <!-- Nút Bắt đầu / Hủy -->
+                    <div class="pt-4">
+                        <button id="generate-btn" class="btn btn-primary w-full text-lg flex items-center justify-center" disabled>
+                            <i class="fa-solid fa-wand-magic-sparkles mr-2"></i> Tạo Bộ Ảnh
+                        </button>
+                        <button id="cancel-btn" class="btn btn-secondary w-full text-lg bg-red-600 hover:bg-red-700 text-white hidden">
+                            Hủy bỏ
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div> 
+
+        <!-- Khu vực kết quả -->
+        <div id="result-container" class="w-full mt-6 hidden">
+            <!-- Thanh tiến trình -->
+            <div id="progress-bar-container" class="w-full max-w-4xl mx-auto mb-4 hidden">
+                <div class="flex justify-between mb-1">
+                    <span id="loading-status" class="text-base font-medium text-yellow-400">Đang tạo ảnh...</span>
+                    <span id="progress-percent" class="text-sm font-medium text-yellow-400">0%</span>
+                </div>
+                <div class="w-full bg-gray-700 rounded-full h-2.5">
+                    <div id="progress-bar" class="bg-yellow-400 h-2.5 rounded-full" style="width: 0%"></div>
+                </div>
+            </div>
+            <!-- Báo lỗi chung -->
+            <div id="error-message" class="w-full max-w-4xl mx-auto p-4 my-4 bg-red-900/50 border border-red-700 rounded-lg text-center hidden">
+                <h3 class="text-lg font-bold text-red-300">Đã xảy ra lỗi</h3>
+                <p id="error-text" class="text-red-300"></p>
+            </div>
+            <!-- Lưới ảnh kết quả (Đã nâng cấp lên 5 cột cho màn hình lớn) -->
+            <div id="result-gallery" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 w-full">
+                <!-- Result cards will be injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="lightbox" class="hidden modal">
+        <span id="lightbox-close" class="modal-close">&times;</span>
+        <button id="lightbox-download" class="lightbox-download" title="Tải ảnh này">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M12 3v10.586l3.293-3.293 1.414 1.414L12 17.414l-4.707-4.707 1.414-1.414L11 13.586V3h2zM5 19h14v2H5z"/>
+            </svg>
+            <span>Download</span>
+        </button>
+        <img id="lightbox-image" class="modal-content" src="" alt="Ảnh phóng to">
+        <button id="lightbox-prev" class="lightbox-nav prev hidden" title="Ảnh trước">&#10094;</button>
+        <button id="lightbox-next" class="lightbox-nav next hidden" title="Ảnh sau">&#10095;</button>
+    </div>
+
+    <!-- Crop Modal -->
+    <div id="crop-modal" class="hidden fixed inset-0 bg-black bg-opacity-80 z-[1001] flex items-center justify-center p-4">
+        <div class="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-4xl max-h-[90vh] flex flex-col">
+            <h3 class="text-xl font-bold text-yellow-400 mb-4">Cắt ảnh</h3>
+            <div class="flex-grow min-h-0">
+                <img id="crop-image-source" src="" alt="Image to crop" class="max-w-full max-h-full">
+            </div>
+            <div class="flex items-center justify-center space-x-2 mt-4 flex-wrap gap-2">
+                <span class="text-sm font-medium text-gray-300">Khổ ảnh:</span>
+                <button data-ratio="NaN" class="crop-ratio-btn btn btn-secondary !px-3 !py-1 text-sm">Tự do</button>
+                <button data-ratio="1" class="crop-ratio-btn btn btn-secondary !px-3 !py-1 text-sm">1:1</button>
+                <button data-ratio="0.75" class="crop-ratio-btn btn btn-secondary !px-3 !py-1 text-sm">3:4</button>
+                <button data-ratio="1.7777" class="crop-ratio-btn btn btn-secondary !px-3 !py-1 text-sm">16:9</button>
+                <button data-ratio="0.5625" class="crop-ratio-btn btn btn-secondary !px-3 !py-1 text-sm">9:16</button>
+            </div>
+            <div class="flex justify-end space-x-4 mt-6">
+                <button id="cancel-crop-btn" class="btn btn-secondary">Hủy</button>
+                <button id="save-crop-btn" class="btn btn-primary">Lưu & Áp dụng</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        // Thêm thư viện Cropper.js
+        const cropperScript = document.createElement('script');
+        cropperScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js';
+        document.head.appendChild(cropperScript);
+
+        // === CONFIGURATION ===
+        const CANVAS_API_KEY = ""; // Placeholder, will be populated by the environment.
+        const CONCURRENT_REQUESTS = 10; // Đã set là 10 để gửi đồng thời
+
+        // Cấu hình mặc định cho Gemini khi sinh ảnh
+        const BASE_GENERATION_CONFIG = {
+            temperature: 0.45,
+            topP: 0.9,
+            topK: 40,
+            maxOutputTokens: 2048
+        };
+
+        const FIXED_ASPECT_RATIO = "3:4";
+
+        // --- DATA LIBRARIES ---
+        const PRESET_MODELS = [
+            { label: "Mẫu 1 (Mặc định)", url: "https://raw.githubusercontent.com/anhlinhhpvn/anhnguoimau/main/anh_01.png" },
+            { label: "Mẫu 2", url: "https://raw.githubusercontent.com/anhlinhhpvn/anhnguoimau/main/Anh_06.jpg" },
+            { label: "Mẫu 3", url: "https://raw.githubusercontent.com/anhlinhhpvn/anhnguoimau/main/anh_03.jpg" },
+            { label: "Mẫu 4", url: "https://raw.githubusercontent.com/anhlinhhpvn/anhnguoimau/refs/heads/main/nam_01.jpg" },
+            { label: "Mẫu 5", url: "https://raw.githubusercontent.com/anhlinhhpvn/anhnguoimau/refs/heads/main/nam_04.png" }
+        ];
+
+        // Thư viện bối cảnh cho mỹ phẩm & nước hoa (thị trường châu Âu)
+        const COSMETIC_SCENES = [
+            // 1. CHRISTMAS – luxury red & gold
+            {
+                id: "christmas_luxury",
+                label: "🎄 Christmas – Luxury Red & Gold",
+                desc: "European Christmas perfume campaign with deep wine red, champagne gold and pine green, cozy but luxurious festive mood.",
+                promptBlock: `[SEASONAL BEAUTY THEME — CHRISTMAS LUXURY 2.0]
+- Main palettes:
+    • Deep wine red (#7A001F, #8B0000)
+    • Festive berry red (#C21836)
+    • Champagne gold (#E6C68A)
+    • Pine green (#0F3923)
+- RULE: The AI MUST alternate visually between:
+    • Version A = dominant wine-red tone
+    • Version B = dominant champagne-gold tone
+  → Cả 2 tone phải xuất hiện trong 10 ảnh (không được chỉ tạo 1 tone duy nhất).
+
+- Background: high-key luxury studio with adjustable red-or-gold tint (NOT fixed warm yellow).
+- Lighting:
+    • Soft neutral white key light
+    • Optional warm gold rim (10–20%)
+    • Absolutely NO full yellow cast over entire frame.
+
+- Decor:
+    • Red satin ribbon (10–20% density)
+    • Gold sparkles (10–15% density)
+    • Pine branch blur (subtle)
+  → Decor phải làm nền cho sản phẩm, không được che logo.
+
+- Mood:
+    • Luxury holiday campaign like Dior Holiday 2023
+    • Premium, modern, European
+    • NO cartoon lights, NO heavy glowing yellow filters.
+
+- Product color protection:
+    • Do not shift product into warm yellow.
+    • Keep product color 100% accurate even in red/gold environment.`
+            },
+
+            // 2. VALENTINE – romantic pink & red
+            {
+                id: "valentines_day",
+                label: "💝 Valentine’s Day – Romantic Pink & Red",
+                desc: "Romantic perfume visuals in blush pink and rose red, soft dreamy feeling for couples in Europe.",
+                promptBlock: `[SEASONAL BEAUTY THEME — VALENTINE ROMANTIC]
+- Palette: blush pink, rose red, soft gold.
+- Background: dreamy soft-focus pastel studio with gentle haze.
+- Elements: rose petals bokeh, very subtle heart-shaped light pattern, satin pink ribbon.
+- Model vibe: soft feminine, natural romantic glow.
+- Mood: dreamy, sweet, premium like a luxury Valentine campaign.`
+            },
+
+            // 3. NEW YEAR’S EVE – black & gold party
+            {
+                id: "new_year_eve",
+                label: "🎉 New Year’s Eve – Black & Gold Sparkle",
+                desc: "Glamorous black and gold party-night mood for New Year’s Eve in Europe.",
+                promptBlock: `[SEASONAL BEAUTY THEME — NEW YEAR'S EVE]
+- Palette: black, gold metallic, silver sparkle.
+- Background: luxury studio with dramatic spotlight and deep shadows.
+- Elements: gold foil bokeh, minimal fireworks-like sparkle (very subtle).
+- Model styling: bold confident look, sharp eyeliner, sleek hair.
+- Mood: glamorous, party-night, high-end club atmosphere.`
+            },
+
+            // 4. BIRTHDAY – playful luxury pastel
+            {
+                id: "birthday_luxe",
+                label: "🎂 Birthday – Playful Luxury Pastel",
+                desc: "Playful yet premium birthday gift mood with pastel colors and elegant props.",
+                promptBlock: `[SEASONAL BEAUTY THEME — BIRTHDAY LUXE]
+- Palette: pastel pink, lavender, baby blue, silver highlights.
+- Background: fun but elegant pastel studio with soft gradient.
+- Elements: balloon bokeh, satin ribbons, light confetti sparkle (low intensity).
+- Model vibe: cheerful elegant, youthful but still premium.`
+            },
+
+            // 5. MOTHER’S DAY – soft feminine nude pink
+            {
+                id: "mothers_day",
+                label: "🌸 Mother’s Day – Soft Nude Pink",
+                desc: "Gentle feminine mood with nude pink and cream tones, perfect for gifts for mothers.",
+                promptBlock: `[SEASONAL BEAUTY THEME — MOTHER''S DAY PURE]
+- Palette: nude pink, cream white, pastel gold.
+- Background: high-key beauty studio with soft window-like light.
+- Elements: blurred flowers (peony, rose), soft glow haze.
+- Model styling: mature elegant woman, natural soft makeup.
+- Mood: pure, loving, classy.`
+            },
+
+            // 6. FATHER’S DAY – masculine luxury
+            {
+                id: "fathers_day",
+                label: "👔 Father’s Day – Masculine Luxury",
+                desc: "Masculine, clean and premium studio noir style, ideal for men’s fragrances.",
+                promptBlock: `[SEASONAL BEAUTY THEME — FATHER'S DAY MASCULINE]
+- Palette: charcoal black, navy, silver graphite.
+- Background: premium studio noir lighting with cool rim light.
+- Elements: minimal geometric shapes, metallic reflections.
+- Model styling: strong elegant masculine look.
+- Mood: strong, clean, premium.`
+            },
+
+            // 7. SPRING GIFT SEASON – fresh pastel
+            {
+                id: "spring_gift",
+                label: "🌼 Spring Gift Season – Fresh Pastel",
+                desc: "Fresh airy spring mood with mint and pastel tones, perfect for gifting season in Europe.",
+                promptBlock: `[SEASONAL BEAUTY THEME — SPRING REFRESH]
+- Palette: mint, lavender, pastel peach.
+- Background: airy soft daylight with spring bloom blur.
+- Elements: flower bokeh, natural sun haze.
+- Model vibe: fresh, pure, natural.`
+            },
+
+            // 8. WEDDING / ANNIVERSARY – champagne elegance
+            {
+                id: "wedding_anniversary",
+                label: "💍 Wedding / Anniversary – Champagne Elegance",
+                desc: "Timeless bridal and anniversary mood with white and champagne gold.",
+                promptBlock: `[SEASONAL BEAUTY THEME — WEDDING ELEGANCE]
+- Palette: white, ivory, champagne gold, soft beige.
+- Background: luxurious soft-focus wedding atmosphere, subtle lace textures.
+- Elements: soft sparkles, diamond-like bokeh, blurred bouquet.
+- Model styling: elegant bridal glow.
+- Mood: timeless, pure, luxury.`
+            },
+
+            // 9. LUXURY STUDIO – Dior/Chanel style
+            {
+                id: "luxury_studio",
+                label: "💎 Luxury Studio – Dior/Chanel Style",
+                desc: "Timeless black–white–gold studio setting, minimal but ultra-premium.",
+                promptBlock: `[SEASONAL BEAUTY THEME — LUXURY STUDIO]
+- Palette: black, white, gold accents.
+- Background: clean high-key or low-key studio, no clutter.
+- Elements: minimal luxury sparkles, soft rim light, subtle reflections.
+- Model vibe: premium editorial beauty.
+- Mood: elegant, timeless, iconic.`
+            },
+
+            // 10. FLORAL FEMININE – quanh năm
+            {
+                id: "floral_feminine",
+                label: "💐 Floral Feminine – All Year",
+                desc: "Soft floral feminine mood with pink and peach tones, good for women’s fragrances.",
+                promptBlock: `[SEASONAL BEAUTY THEME — FLORAL FEMME]
+- Palette: pink, peach, pastel green.
+- Background: floral blur with soft daylight.
+- Elements: gentle flower bokeh, no heavy props.
+- Model: soft feminine beauty.`
+            },
+
+            // 11. MASCULINE LUXE – quanh năm
+            {
+                id: "masculine_luxury",
+                label: "🕶️ Masculine Luxury – All Year",
+                desc: "Dark graphite and navy studio noir look for masculine luxury fragrances.",
+                promptBlock: `[SEASONAL BEAUTY THEME — MASCULINE LUXE]
+- Palette: dark graphite, navy, silver.
+- Background: premium studio noir with controlled highlights.
+- Elements: metallic geometric shapes, subtle reflections.
+- Model: strong elegant masculine, quiet luxury style.`
+            }
+        ];
+
+        // =====================================================
+        // 🎄 DIOR STYLE — 20 ANGLES FOR PERFUME/COSMETIC SHOOT
+        // =====================================================
+
+        const ANGLE_LIBRARY_20 = [
+
+            // ============================
+            // 🎁 SINGLE BOTTLE — 10 GÓC
+            // ============================
+
+            // 1 — Bottle Hero Gift Shot
+            {
+                id: "SB1_bottle_hero_gift",
+                allowedProductTypes: ["single_bottle"], // Chỉ dùng cho chai lẻ
+                includesModelFace: false,
+                includesHands: false,
+                mustShowAllItems: false,
+                layout: "hero",
+                compositionHints: [
+                    "- Full bottle centered on gift surface",
+                    "- Gift box / ribbon / festive decor behind",
+                    "- Soft warm bokeh lighting"
+                ]
+            },
+
+            // 2 — Bottle on Gift Box
+            {
+                id: "SB2_bottle_on_box",
+                allowedProductTypes: ["single_bottle"], // Chỉ dùng cho chai lẻ
+                includesModelFace: false,
+                includesHands: false,
+                mustShowAllItems: false,
+                layout: "hero_table",
+                compositionHints: [
+                    "- Bottle placed on top of wrapped gift box",
+                    "- Ribbon or bow visible",
+                    "- Warm glowing atmosphere"
+                ]
+            },
+
+            // 3 — Bottle with Ribbon & Bow
+            {
+                id: "SB3_bottle_ribbon",
+                allowedProductTypes: ["single_bottle"], // Chỉ dùng cho chai lẻ
+                includesModelFace: false,
+                includesHands: false,
+                mustShowAllItems: false,
+                layout: "gift_ribbon",
+                compositionHints: [
+                    "- Bottle standing with ribbon or bow nearby",
+                    "- Decorative holiday scene"
+                ]
+            },
+
+            // 4 — Bottle on Festive Table
+            {
+                id: "SB4_bottle_festive_table",
+                allowedProductTypes: ["single_bottle"], // Chỉ dùng cho chai lẻ
+                includesModelFace: false,
+                includesHands: false,
+                mustShowAllItems: false,
+                layout: "tabletop",
+                compositionHints: [
+                    "- Bottle on decorated table",
+                    "- Christmas ornaments, candles, warm tones"
+                ]
+            },
+
+            // 5 — Bottle with Hand Touching Gift (no face)
+            {
+                id: "SB5_hand_touching_gift",
+                allowedProductTypes: ["single_bottle"], // Chỉ dùng cho chai lẻ
+                includesModelFace: false,
+                includesHands: true,
+                mustShowAllItems: false,
+                layout: "hand_interact",
+                compositionHints: [
+                    "- Bottle with one hand interacting with ribbon or gift box",
+                    "- Full bottle visible"
+                ]
+            },
+
+            // 6 — Bottle with Model Blurred Behind (full bottle)
+            {
+                id: "SB6_bottle_front_model_blur",
+                allowedProductTypes: ["single_bottle"], // Chỉ dùng cho chai lẻ
+                includesModelFace: true,
+                includesHands: false,
+                mustShowAllItems: false,
+                layout: "foreground_bottle",
+                compositionHints: [
+                    "- Full bottle sharp in foreground",
+                    "- Model softly blurred in background"
+                ]
+            },
+
+            // 7 — Model Holding Bottle (full bottle)
+            {
+                id: "SB7_model_holding_bottle",
+                allowedProductTypes: ["single_bottle"], // Chỉ dùng cho chai lẻ
+                includesModelFace: true,
+                includesHands: true,
+                mustShowAllItems: false,
+                layout: "model_hold",
+                compositionHints: [
+                    "- Model holding full bottle at chest or near face",
+                    "- Clean beauty portrait"
+                ]
+            },
+
+            // 8 — Model Presenting Bottle as Gift
+            {
+                id: "SB8_model_present_gift",
+                allowedProductTypes: ["single_bottle"], // Chỉ dùng cho chai lẻ
+                includesModelFace: true,
+                includesHands: true,
+                mustShowAllItems: false,
+                layout: "model_offer",
+                compositionHints: [
+                    "- Model offering bottle forward like a present",
+                    "- Full bottle visible"
+                ]
+            },
+
+            // 9 — Bottle with Candlelight Scene
+            {
+                id: "SB9_candlelight_gift",
+                allowedProductTypes: ["single_bottle"], // Chỉ dùng cho chai lẻ
+                includesModelFace: false,
+                includesHands: false,
+                mustShowAllItems: false,
+                layout: "candle",
+                compositionHints: [
+                    "- Bottle on table with candles",
+                    "- Full bottle visible, warm glow"
+                ]
+            },
+
+            // 10 — Bottle on Snowy Gift Setup
+            {
+                id: "SB10_bottle_snow_scene",
+                allowedProductTypes: ["single_bottle"], // Chỉ dùng cho chai lẻ
+                includesModelFace: false,
+                includesHands: false,
+                mustShowAllItems: false,
+                layout: "snow_scene",
+                compositionHints: [
+                    "- Bottle on artificial snow with gift decor",
+                    "- Festive luxury look"
+                ]
+            },
+
+            // ============================
+            // 🎁 GIFT SET — 10 GÓC
+            // ============================
+
+            // 11 — Gift Set Flatlay Open
+            {
+                id: "GS1_flatlay_open",
+                allowedProductTypes: ["giftset_2","giftset_3","giftset_4","giftset_5","giftset_6"],
+                includesModelFace: false,
+                includesHands: false,
+                mustShowAllItems: true,
+                layout: "flatlay_open",
+                compositionHints: [
+                    "- Box fully open, all items visible",
+                    "- Festive decor around"
+                ]
+            },
+
+            // 12 — Gift Set on Decorated Table
+            {
+                id: "GS2_set_on_table",
+                allowedProductTypes: ["giftset_2","giftset_3","giftset_4","giftset_5","giftset_6"],
+                includesModelFace: false,
+                includesHands: false,
+                mustShowAllItems: true,
+                layout: "set_table",
+                compositionHints: [
+                    "- Full set placed on decorated table surface",
+                    "- Ribbons, ornaments, warm tones"
+                ]
+            },
+
+            // 13 — Gift Set with Ribbon Wrapped
+            {
+                id: "GS3_set_with_ribbon",
+                allowedProductTypes: ["giftset_2","giftset_3","giftset_4","giftset_5","giftset_6"],
+                includesModelFace: false,
+                includesHands: false,
+                mustShowAllItems: true,
+                layout: "set_ribbon",
+                compositionHints: [
+                    "- Box with decorative ribbon",
+                    "- Bottles positioned neatly"
+                ]
+            },
+
+            // 14 — Gift Set as Luxury Present
+            {
+                id: "GS4_luxury_present",
+                allowedProductTypes: ["giftset_2","giftset_3","giftset_4","giftset_5","giftset_6"],
+                includesModelFace: false,
+                includesHands: false,
+                mustShowAllItems: true,
+                layout: "luxury_present",
+                compositionHints: [
+                    "- Set presented upright like window display",
+                    "- Warm festive glow"
+                ]
+            },
+
+            // 15 — Model Presenting Open Gift Box
+            {
+                id: "GS5_model_openbox",
+                allowedProductTypes: ["giftset_2","giftset_3","giftset_4","giftset_5","giftset_6"],
+                includesModelFace: true,
+                includesHands: true,
+                mustShowAllItems: true,
+                layout: "model_openbox",
+                compositionHints: [
+                    "- Model holding open gift box",
+                    "- Full set visible inside"
+                ]
+            },
+
+            // 16 — Model Holding Closed Gift Set Box
+            {
+                id: "GS6_model_holding_box",
+                allowedProductTypes: ["giftset_2","giftset_3","giftset_4","giftset_5","giftset_6"],
+                includesModelFace: true,
+                includesHands: true,
+                mustShowAllItems: false,
+                layout: "model_hold_box",
+                compositionHints: [
+                    "- Model holding closed gift set box",
+                    "- Beauty portrait style"
+                ]
+            },
+
+            // 17 — Set Foreground + Model Blur Behind
+            {
+                id: "GS7_set_front_model_blur",
+                allowedProductTypes: ["giftset_2","giftset_3","giftset_4","giftset_5","giftset_6"],
+                includesModelFace: true,
+                includesHands: false,
+                mustShowAllItems: true,
+                layout: "foreground_set",
+                compositionHints: [
+                    "- Full set sharp up front",
+                    "- Model softly blurred in background"
+                ]
+            },
+
+            // 18 — Model Sitting Behind Set
+            {
+                id: "GS8_model_sitting_behind",
+                allowedProductTypes: ["giftset_2","giftset_3","giftset_4","giftset_5","giftset_6"],
+                includesModelFace: true,
+                includesHands: false,
+                mustShowAllItems: true,
+                layout: "model_sit",
+                compositionHints: [
+                    "- Model behind table",
+                    "- Full set centered in front"
+                ]
+            },
+
+            // 19 — Gift Set with Gift Wrapping Paper Scene
+            {
+                id: "GS9_set_wrapping",
+                allowedProductTypes: ["giftset_2","giftset_3","giftset_4","giftset_5","giftset_6"],
+                includesModelFace: false,
+                includesHands: false,
+                mustShowAllItems: true,
+                layout: "wrapping",
+                compositionHints: [
+                    "- Set with wrapping paper around",
+                    "- Holiday gifting mood"
+                ]
+            },
+
+            // 20 — Gift Set on Snowy Gift Surface
+            {
+                id: "GS10_set_snow_scene",
+                allowedProductTypes: ["giftset_2","giftset_3","giftset_4","giftset_5","giftset_6"],
+                includesModelFace: false,
+                includesHands: false,
+                mustShowAllItems: true,
+                layout: "set_snow",
+                compositionHints: [
+                    "- Set placed on artificial snow",
+                    "- Festive ornaments around"
+                ]
+            }
+        ];
+
+        // ======================================================================
+        // 🎯 AUTOSELECT ANGLES V2 — RANDOM 10 BEST ANGLES FROM ANGLE_LIBRARY_20
+        // ======================================================================
+        // productBlueprint = CURRENT_BATCH_BLUEPRINT.productBlueprint
+        // Chỉ cần gọi: autoSelectAnglesV2(productBlueprint)
+
+        function autoSelectAnglesV2(productBlueprint) {
+
+            // 1) Lấy loại sản phẩm đã xác định ở Bước 1
+            const productType = productBlueprint?.source?.product_type || "single_bottle";
+
+            // 2) Lọc góc phù hợp với loại sản phẩm (single hoặc giftset)
+            let filteredAngles = ANGLE_LIBRARY_20.filter(a =>
+                a.allowedProductTypes.includes(productType)
+            );
+
+            // Phòng khi danh sách còn dưới 10 (hiếm khi xảy ra)
+            if (filteredAngles.length < 10) {
+                let extra = [...filteredAngles];
+                while (filteredAngles.length < 10) {
+                    filteredAngles = filteredAngles.concat(extra);
+                }
+            }
+
+            // 3) XÁO TRỘN FULL BỘ — Fisher-Yates Shuffle
+            for (let i = filteredAngles.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [filteredAngles[i], filteredAngles[j]] = [filteredAngles[j], filteredAngles[i]];
+            }
+
+            // 4) Lấy đúng 10 góc để gửi cho 10 ảnh
+            const selected = filteredAngles.slice(0, 10);
+
+            // 5) Trả về bản đầy đủ — mỗi góc AI đều hiểu rõ compositionHints mới
+            return selected;
+        }
+
+        // --- DOM Elements ---
+        const apiKeyInput = document.getElementById('api-key-input');
+        const modelInput = document.getElementById('model-input');
+        const productInput = document.getElementById('product-input');
+        const productTypeSelect = document.getElementById('product-type');
+        const promptInput = document.getElementById('prompt-input');
+        const generateBtn = document.getElementById('generate-btn');
+        const cancelBtn = document.getElementById('cancel-btn');
+        const resultContainer = document.getElementById('result-container');
+        const progressBarContainer = document.getElementById('progress-bar-container');
+        const loadingStatus = document.getElementById('loading-status');
+        const progressBar = document.getElementById('progress-bar');
+        const progressPercent = document.getElementById('progress-percent');
+        const resultGallery = document.getElementById('result-gallery');
+        const errorMessage = document.getElementById('error-message');
+        const errorText = document.getElementById('error-text');
+        const lightbox = document.getElementById('lightbox');
+        const lightboxImage = document.getElementById('lightbox-image');
+        const lightboxClose = document.getElementById('lightbox-close');
+        const lightboxPrev = document.getElementById('lightbox-prev');
+        const lightboxNext = document.getElementById('lightbox-next');
+        const lightboxDownload = document.getElementById('lightbox-download');
+        const presetModelButtonContainer = document.getElementById('preset-model-buttons');
+        const cropModal = document.getElementById('crop-modal');
+        const cropImageSource = document.getElementById('crop-image-source');
+        const saveCropBtn = document.getElementById('save-crop-btn');
+        const cancelCropBtn = document.getElementById('cancel-crop-btn');
+
+        // --- AI Product Analysis ---
+        async function analyzeProductImage(file) {
+            const productTypeSelect = document.getElementById('product-type');
+            const originalOptionText = productTypeSelect.options[0].textContent;
+            productTypeSelect.disabled = true;
+            isProductAnalysisInProgress = true; // Bắt đầu phân tích
+            productTypeSelect.value = 'auto'; // Reset to the placeholder
+            productTypeSelect.options[0].textContent = "⏳ Đang phân tích ảnh...";
+
+            try {
+                const base64Data = await fileToBase64(file);
+                const { mimeType, data } = parseDataUrl(base64Data);
+
+                const prompt = `
+                    Analyze the provided image of a cosmetic product or set. Your task is to identify if it's a single item or a gift set, and count the number of primary cosmetic items (like perfume bottles, jars, tubes).
+
+                    IMPORTANT RULES:
+                    1.  Focus ONLY on the primary cosmetic items. IGNORE packaging like outer boxes, ribbons, or decorative elements when counting.
+                    2.  If a large box is open and shows smaller items inside, count the smaller items, not the large box. For example, a box showing 2 perfume bottles inside is a set of 2.
+                    3.  If it's a single item, the count is 1.
+
+                    Respond ONLY with a JSON object in this exact format:
+                    {"type": "single_bottle" or "giftset", "count": N}
+                    Where N is the number of primary cosmetic items you counted.
+
+                    Examples:
+                    - Image of one perfume bottle: {"type": "single_bottle", "count": 1}
+                    - Image of a gift box containing 3 small bottles: {"type": "giftset", "count": 3}
+                    - Image of two bottles standing next to each other: {"type": "giftset", "count": 2}
+
+                    If you are very unsure, default to a single bottle.
+                `;
+
+                const payload = {
+                    contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType, data } }] }],
+                    generationConfig: { "responseMimeType": "application/json" }
+                };
+
+                const apiKey = getApiKey();
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+                
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) throw new Error(`API call failed with status ${response.status}`);
+                
+                const result = await response.json();
+                const analysis = JSON.parse(result.candidates[0].content.parts[0].text);
+                updateProductType(analysis);
+            } catch (error) {
+                console.error("Lỗi phân tích ảnh sản phẩm:", error);
+                updateProductType({ type: 'single_bottle', count: 1 }); // Mặc định về chai lẻ nếu lỗi
+            } finally {
+                productTypeSelect.disabled = false;
+                productTypeSelect.options[0].textContent = "Tự động phân tích ảnh...";
+                isProductAnalysisInProgress = false; // Kết thúc phân tích
+                updateGenerateAvailability(); // Cập nhật trạng thái nút sau khi phân tích xong
+            }
+        }
+
+        function updateProductType(analysis) {
+            const productTypeSelect = document.getElementById('product-type');
+            let valueToSet = 'single_bottle';
+
+            if (analysis.type === 'giftset' && analysis.count > 1) {
+                valueToSet = `giftset_${analysis.count}`;
+                // Nếu AI đếm được số lượng không có trong option (vd: 5), ta chọn option lớn nhất có sẵn
+                if (![...productTypeSelect.options].some(opt => opt.value === valueToSet) && analysis.count > 1) {
+                    valueToSet = 'giftset_6'; // Mặc định về giftset lớn nhất nếu AI đếm ra số lượng > 6
+                }
+            }
+            
+            productTypeSelect.value = valueToSet;
+            console.log(`AI phân tích: ${analysis.type}, ${analysis.count} món. Đã chọn: ${valueToSet}`);
+        }
+
+        // --- App State ---
+        let modelFile = null, productFile = null;
+        let originalModelDataUrl = null, originalProductDataUrl = null; // Lưu ảnh gốc để cắt lại
+        let currentGalleryImages = [], currentIndex = 0, isZoomed = false;
+        let generatedImagesData = [];
+        let CURRENT_BATCH_BLUEPRINT = null;
+        let isBatchDone = false;
+        let cropper = null;
+        let currentCroppingTarget = null; // 'model' or 'product'
+
+        // --- Cropper.js Logic ---
+        
+
+        // --- Core Utility Functions ---
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(new Error('Không thể đọc được file đã chọn.'));
+            });
+        }
+
+        function dataURLtoFile(dataurl, filename) {
+            var arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
+                bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
+            while(n--){ u8arr[n] = bstr.charCodeAt(n); }
+            return new File([u8arr], filename, {type:mime});
+        }
+
+        function parseDataUrl(dataUrl) {
+            const match = dataUrl.match(/^data:(image\/[a-z]+);base64,(.+)$/);
+            if (!match) { throw new Error("Định dạng Data URL không hợp lệ."); }
+            return { mimeType: match[1], data: match[2] };
+        }
+
+        async function urlToFile(url, filename, mimeType){
+            try {
+                const res = await fetch(url);
+                const blob = await res.blob();
+                return new File([blob], filename, {type: mimeType || blob.type});
+            } catch (error) {
+                // Thử với proxy nếu thất bại
+                try {
+                    const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(url);
+                    const res = await fetch(proxyUrl);
+                    const blob = await res.blob();
+                    return new File([blob], filename, { type: mimeType || blob.type });
+                } catch (proxyError) {
+                    console.error("Proxy fetch also failed:", proxyError);
+                }
+                return null;
+            }
+        }
+
+        async function callGeminiWithRetry(userApiKey, payload, signal, maxRetries = 3) {
+            const apiKey = userApiKey.trim() || CANVAS_API_KEY;
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`;
+
+            let lastError = null;
+            for (let i = 0; i < maxRetries; i++) {
+                if (signal.aborted) throw new Error('Yêu cầu đã bị hủy.');
+
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload),
+                        signal: signal
+                    });
+
+                    if (signal.aborted) throw new Error('Yêu cầu đã bị hủy.');
+
+                    if (response.status === 429) { // Too Many Requests
+                        lastError = new Error(`Rate limit. Đang thử lại sau ${2 ** i}s...`);
+                        await new Promise(resolve => setTimeout(resolve, (2 ** i) * 1000 + Math.random() * 1000));
+                        continue;
+                    }
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        lastError = new Error(`Lỗi API (${response.status}): ${errorData.error?.message || response.statusText}`);
+                        await new Promise(resolve => setTimeout(resolve, (2 ** i) * 1000 + Math.random() * 1000));
+                        continue;
+                    }
+
+                    const result = await response.json();
+
+                    if (!result.candidates || result.candidates.length === 0) {
+                        if (result.promptFeedback && result.promptFeedback.blockReason) {
+                             throw new Error(`Bị chặn: ${result.promptFeedback.blockReason}.`);
+                        }
+                        throw new Error("Không nhận được kết quả (candidates) từ API.");
+                    }
+                    
+                    const part = result?.candidates?.[0]?.content?.parts?.find(p=>p.inlineData);
+                    if (part && part.inlineData.data) {
+                        return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+                    }
+
+                    throw new Error("API không trả về dữ liệu ảnh hợp lệ.");
+
+                } catch (error) {
+                    if (error.name === 'AbortError') throw error;
+                    lastError = error;
+                    if (i < maxRetries - 1) {
+                        await new Promise(resolve => setTimeout(resolve, (2 ** i) * 1000 + Math.random() * 1000));
+                    }
+                }
+            }
+            console.error("Lỗi cuối cùng sau khi retry:", lastError);
+            throw new Error(`Gọi API thất bại sau ${maxRetries} lần thử.`);
+        }
+
+        function getApiKey() {
+          return apiKeyInput.value.trim() || CANVAS_API_KEY;
+        }
+
+        function sanitizeNotes(s){ return (s||"").replace(/```/g,"").replace(/\b(ignore|disregard|override)\b.*\b(instruction|rule|policy)\b/ig, "[filtered]"); }
+
+        // --- File & Upload Handlers ---
+        function handleFileUpload(uploadId, inputId, previewId, fileStoreCallback, originalDataUrlCallback, deleteBtnId, cropBtnId) {
+            const uploadElement = document.getElementById(uploadId);
+            const inputElement = document.getElementById(inputId);
+            const previewElement = document.getElementById(previewId);
+            const deleteBtn = document.getElementById(deleteBtnId);
+            const cropBtn = document.getElementById(cropBtnId);
+
+            async function handleFile(file) {
+                if (!file || !file.type.startsWith('image/')) return;
+                uploadElement.classList.add('has-image');
+
+                fileStoreCallback(file);
+                
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const dataUrl = e.target.result;
+                    previewElement.src = dataUrl;
+                    originalDataUrlCallback(dataUrl); // Lưu ảnh gốc
+                    previewElement.classList.remove('hidden');
+                    deleteBtn.classList.remove('hidden');
+                    cropBtn.classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+
+                if (uploadId === 'model-upload') {
+                    document.querySelectorAll('.preset-model-btn').forEach(btn => btn.classList.remove('selected'));
+                }
+
+                if (inputId === 'product-input') {
+                    analyzeProductImage(file); // <-- GỌI HÀM PHÂN TÍCH ẢNH
+                    setRandomProductName();
+                }
+
+                updateGenerateAvailability();
+            }
+
+            cropBtn.addEventListener('click', (e) => { // Sửa lỗi nhỏ: không cho click vào crop button khi đang kéo thả
+                e.stopPropagation();
+                const target = uploadId.includes('model') ? 'model' : 'product';
+                const dataUrl = target === 'model' ? originalModelDataUrl : originalProductDataUrl;
+                if (dataUrl) {
+                    openCropModal(dataUrl, target);
+                }
+            });
+
+            uploadElement.addEventListener('click', (e) => { if (deleteBtn && (e.target === deleteBtn || deleteBtn.contains(e.target) || e.target === cropBtn || cropBtn.contains(e.target))) return; if(!uploadElement.classList.contains('disabled')) inputElement.click(); });
+            inputElement.addEventListener('change', () => { if (inputElement.files[0]) { handleFile(inputElement.files[0]); } });
+            uploadElement.addEventListener('dragover', (e) => { e.preventDefault(); if(!uploadElement.classList.contains('disabled')) uploadElement.classList.add('dragover'); });
+            uploadElement.addEventListener('dragleave', () => { uploadElement.classList.remove('dragover'); });
+            uploadElement.addEventListener('drop', (e) => { e.preventDefault(); uploadElement.classList.remove('dragover'); if (e.dataTransfer.files[0] && !uploadElement.classList.contains('disabled')) {
+                inputElement.files = e.dataTransfer.files;
+                handleFile(e.dataTransfer.files[0]);
+            } });
+
+            deleteBtn.addEventListener('click', (e) => { 
+                e.stopPropagation(); 
+                fileStoreCallback(null); 
+                originalDataUrlCallback(null);
+                inputElement.value = ''; 
+                previewElement.src = ''; 
+                previewElement.classList.add('hidden'); 
+                deleteBtn.classList.add('hidden'); 
+                cropBtn.classList.add('hidden');
+                uploadElement.classList.remove('has-image'); 
+                updateGenerateAvailability();
+                // Reset lại dropdown khi xóa ảnh sản phẩm
+                if (uploadId === 'product-upload') {
+                    productTypeSelect.value = 'auto';
+                    productTypeSelect.disabled = true;
+                }
+                 if (uploadId === 'model-upload') {
+                    document.querySelectorAll('.preset-model-btn').forEach(btn => btn.classList.remove('selected'));
+                }
+            });
+        }
+        
+        handleFileUpload('model-upload', 'model-input', 'model-preview', (file) => modelFile = file, (url) => originalModelDataUrl = url, 'model-delete-btn', 'model-crop-btn');
+        handleFileUpload('product-upload', 'product-input', 'product-preview', (file) => productFile = file, (url) => originalProductDataUrl = url, 'product-delete-btn', 'product-crop-btn');
+
+        // --- Cropper Modal Functions ---
+        function openCropModal(imageDataUrl, target) {
+            currentCroppingTarget = target;
+            cropImageSource.src = imageDataUrl;
+            cropModal.classList.remove('hidden');
+
+            if (cropper) {
+                cropper.destroy();
+            }
+
+            cropper = new Cropper(cropImageSource, {
+                aspectRatio: NaN, // Bắt đầu với chế độ tự do
+                viewMode: 1,
+                background: false,
+                autoCropArea: 0.8,
+            });
+        }
+
+        document.querySelectorAll('.crop-ratio-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                if (cropper) {
+                    const ratio = parseFloat(button.dataset.ratio);
+                    cropper.setAspectRatio(ratio);
+                }
+            });
+        });
+
+        cancelCropBtn.addEventListener('click', () => {
+            cropModal.classList.add('hidden');
+            if (cropper) cropper.destroy();
+            cropper = null;
+        });
+
+        saveCropBtn.addEventListener('click', () => {
+            if (!cropper || !currentCroppingTarget) return;
+            const croppedCanvas = cropper.getCroppedCanvas();
+            const croppedDataUrl = croppedCanvas.toDataURL(currentCroppingTarget === 'model' ? modelFile.type : productFile.type);
+            
+            const newFile = dataURLtoFile(croppedDataUrl, currentCroppingTarget === 'model' ? modelFile.name : productFile.name);
+
+            if (currentCroppingTarget === 'model') {
+                modelFile = newFile;
+                document.getElementById('model-preview').src = croppedDataUrl;
+            } else {
+                productFile = newFile;
+                document.getElementById('product-preview').src = croppedDataUrl;
+            }
+
+            cancelCropBtn.click(); // Đóng modal
+        });
+        
+        // --- Image Generation Logic ---
+        async function generateImage(apiPayload, signal){
+            return await callGeminiWithRetry(getApiKey(), apiPayload, signal);
+        }
+
+        function buildBatchBlueprint() {
+            const sceneEl = document.getElementById('scene');
+            const photoStyleEl = document.getElementById('photo-style');
+            // const aspectEl = document.getElementById('aspect-ratio'); // không cần dùng nữa
+
+            const selectedSceneId = sceneEl?.value || COSMETIC_SCENES[0].id;
+            const photoStyle = photoStyleEl?.value || "commercial_bright";
+            // Khóa cứng khổ ảnh 3:4
+            const aspectKey = "3:4";
+
+            const scenePreset = COSMETIC_SCENES.find(s => s.id === selectedSceneId) || COSMETIC_SCENES[0];
+            const rawUserNotes = promptInput?.value.trim() || "";
+
+            // Lấy loại sản phẩm trực tiếp từ dropdown (đã được AI hoặc người dùng chọn)
+            const selectedProductType = productTypeSelect?.value || "auto";
+            let finalProductType = selectedProductType;
+
+            // Nếu vẫn là 'auto' (trường hợp AI phân tích lỗi hoặc chưa phân tích xong), mặc định là chai lẻ
+            if (finalProductType === 'auto') {
+                finalProductType = 'single_bottle';
+            }
+
+            const isGiftSet = finalProductType.startsWith('giftset');
+            let bottleCount = 1;
+            if (isGiftSet) {
+                // Lấy số lượng từ value, ví dụ 'giftset_3' -> 3
+                bottleCount = parseInt(finalProductType.split('_')[1], 10) || 2;
+            }
+
+            // Mapping khổ ảnh → cấu hình camera
+            const ASPECT_CONFIG = {
+                "3:4": {
+                    aspect_ratio: "3:4",
+                    orientation: "vertical",
+                    platform_hint: "ecommerce_product_page, beauty_editorial",
+                    description: "classic vertical product/portrait framing for cosmetics & perfume"
+                }
+            };
+
+            const cameraPreset = ASPECT_CONFIG["3:4"];
+
+            // 5) Product blueprint – NHỚ GHI product_type
+            const productBlueprint = {
+                source: {
+                    has_product_image: !!productFile,
+                    type: "cosmetic/perfume",
+                    isGiftSet,
+                    bottleCount,
+                    product_type: finalProductType
+                },
+                fidelity: {
+                    preserve_shape: true,
+                    preserve_color: true,
+                    preserve_logo: true,
+                    no_invented_labels: true,
+                    no_brand_mixing: true
+                }
+            };
+
+            return {
+                // Thông tin model
+                modelBlueprint: {
+                    source: { has_model_image: !!modelFile },
+                    identity_lock: {
+                        tier: 1,
+                        similarity: 0.98,
+                        notes: "Face and hand identity must remain consistent and recognizable across all images in this batch."
+                    }
+                },
+
+                // Thông tin sản phẩm (mỹ phẩm / nước hoa)
+                productBlueprint,
+
+                // Bối cảnh & phong cách theo mùa / dịp (từ COSMETIC_SCENES)
+                sceneBlueprint: {
+                    id: scenePreset.id,
+                    label: scenePreset.label,
+                    desc: scenePreset.desc,
+                    seasonalPromptBlock: scenePreset.promptBlock,
+                    photo_style: photoStyle
+                },
+
+                // Cấu hình camera dựa trên khổ ảnh
+                cameraBlueprint: {
+                    aspect_ratio: cameraPreset.aspect_ratio,
+                    orientation: cameraPreset.orientation,
+                    platform_hint: cameraPreset.platform_hint,
+                    description: cameraPreset.description,
+                    system: "Canon digital full-frame camera body",
+                    lens: "85mm or 50mm prime lens for professional beauty/commercial look",
+                    style: "high-end cosmetic & perfume advertising, 8k detail, clean noise-free image"
+                },
+
+                // 10 kịch bản chụp tay cầm / beauty shot
+                angleBlueprints: autoSelectAnglesV2(productBlueprint), // Đã cập nhật để dùng hàm V2
+
+                // Ghi chú người dùng (ưu tiên cao)
+                userNotes: rawUserNotes,
+
+                // Cấu hình sinh ảnh gốc
+                generationConfig: BASE_GENERATION_CONFIG
+            };
+        }
+
+
+        // Hướng dẫn chi tiết cho từng khổ ảnh để AI hiểu cách compose
+        function buildAspectInstruction(aspectRatio) {
+            return `
+[ASPECT RATIO & OUTPUT IMAGE SPEC — 3:4 LOCKED]
+
+- You MUST generate the final image in a VERTICAL 3:4 aspect ratio.
+- Do NOT generate square, 9:16, 4:3, or any other aspect ratio.
+- The framing must feel like a classic vertical beauty/product shot for cosmetics and perfume.
+
+[OUTPUT_IMAGE_SPEC_JSON]
+{
+  "required_aspect_ratio": "3:4",
+  "orientation": "vertical",
+  "usage": ["ecommerce_product_page", "beauty_campaign"],
+  "must_preserve_full_product_in_frame": true
+}
+
+- Respect this JSON specification strictly when composing and rendering the image.
+- If any other instruction conflicts with this, the JSON spec for 3:4 must win.`.trim();
+        }
+
+        function buildMasterPromptHeader(angleSpec, aspectRatio) {
+            const bb = CURRENT_BATCH_BLUEPRINT;
+            if (!bb) return "";
+
+            const { sceneBlueprint, userNotes, cameraBlueprint } = bb;
+            const sceneDesc = sceneBlueprint?.desc || "A clean, professional high-end setting.";
+            const seasonalBlock = sceneBlueprint?.seasonalPromptBlock || "";
+            const poseDesc = angleSpec?.notes || "A natural pose holding the product.";
+            const finalAspectRatio = "3:4"; // This line was already correct from a previous step, but confirming it is locked.
+            const aspectInstruction = buildAspectInstruction(finalAspectRatio);
+
+            // Tạo block gợi ý composition dựa trên flag trong angleSpec
+            const compositionHints = [];
+            if (angleSpec.includesModelFace) {
+                compositionHints.push("- Include the model’s face clearly in frame with flattering beauty lighting.");
+            } else {
+                compositionHints.push("- The model’s face does NOT need to be visible. Focus more on hands and product.");
+            }
+            if (angleSpec.includesModelUpperBody) {
+                compositionHints.push("- Show at least the upper body or shoulders of the model to give context.");
+            }
+            if (angleSpec.includesHands) {
+                compositionHints.push("- Hands must be visible, elegant, well-groomed and interacting naturally with the product.");
+            } else {
+                compositionHints.push("- Hands are optional for this shot and may be excluded if not needed.");
+            }
+            if (angleSpec.includesGiftBoxOrSet) {
+                compositionHints.push("- Show the gift box or full perfume/cosmetic set clearly as part of the composition.");
+            }
+            if (angleSpec.multiBottleComposition) {
+                compositionHints.push("- Arrange multiple bottles or items in a balanced way, but keep one hero product as the main focus.");
+            }
+
+            if (angleSpec.framing) {
+                compositionHints.push(`- Framing style: ${angleSpec.framing.replace(/_/g, " ")}.`);
+            }
+            if (angleSpec.cameraAngle) {
+                compositionHints.push(`- Camera angle: ${angleSpec.cameraAngle.replace(/_/g, " ")}.`);
+            }
+
+            const shotCompositionBlock = compositionHints.length
+                ? "[SHOT COMPOSITION HINTS]\n" + compositionHints.join("\n")
+                : "";
+
+            const blueprintJson = JSON.stringify({
+                batch: {
+                    model: bb.modelBlueprint,
+                    product: bb.productBlueprint,
+                    scene: {
+                        id: sceneBlueprint.id,
+                        label: sceneBlueprint.label,
+                        desc: sceneDesc
+                    },
+                    camera: cameraBlueprint
+                },
+                shot: {
+                    angle_spec: angleSpec
+                }
+            }, null, 2);
+
+            const luxuryPrinciplesBlock = `
+[GLOBAL LUXURY COSMETIC & PERFUME PHOTOGRAPHY PRINCIPLES — PRIORITY LEVEL 1]
+
+- OVERALL LOOK & BRAND POSITIONING:
+  • The visual style must match high-end European luxury brands (Dior, Chanel, YSL, etc.) without copying any protected brand.
+  • Mood: quiet luxury, calm confidence, refined sensuality — never cheap, aggressive, or overly sexy.
+  • Every frame must be usable as a premium beauty campaign image or e-commerce hero shot.
+
+- LIGHTING DESIGN:
+  • Always use soft, controlled beauty lighting that flatters both skin and products.
+  • Use a 3-point lighting logic: a gentle key light, a subtle fill light, and a soft rim or hair light where appropriate.
+  • The key light must keep the face and product readable: no harsh, ugly shadows across the eyes, nose, lips, or logo.
+  • Avoid blown-out highlights on glass and metal. Reflections must be elegant and controlled, never chaotic.
+  • Skin should look luminous and healthy, not oily, plastic, or over-smoothed.
+
+- BACKGROUND & DEPTH:
+  • Use only three main background types:
+    1) High-key studio: clean light background (white, cream, very soft pastel) — perfect for packshot and beauty portrait.
+    2) Luxury lifestyle: subtle interior or set design that supports the brand mood (marble, silk, glass, soft furniture).
+    3) Macro beauty close-up: blurred textures, skin, or materials that form an abstract luxury backdrop.
+  • Backgrounds must remain minimal, premium, and uncluttered. No random objects, no messy environments.
+  • Use shallow depth of field and premium bokeh to separate the subject from the background and create a luxury glow.
+  • Light flares and glows are allowed only if subtle and controlled, never overpowering the product or face.
+
+- PRODUCT PRIORITY — PRODUCT IS THE HERO:
+  • In every shot, the cosmetic or perfume product must be clearly visible and identifiable.
+  • At least one bottle or product unit must be in perfect sharp focus with the logo and key text readable.
+  • The product must never be cropped in a confusing way: avoid cutting through caps, logos, or key design elements.
+  • Do not place heavy flares, shadows, or objects over the logo or label. Do NOT distort any logo text.
+
+- MODEL & HANDS — ELEGANT, EUROPEAN STYLE:
+  • The model must look refined, modern, and European in styling: think timeless beauty, not extreme or experimental.
+  • Poses must be elegant, relaxed, and natural. Avoid exaggerated, overly sexy, or contorted poses.
+  • Facial expressions: soft smile, calm confidence, gentle allure — no cartoonish or over-acted emotions.
+  • Hands must be clean, well-groomed, and feminine or refined in style. Nail polish: nude, soft pink, or very natural tones.
+  • No chipped nails, no overly long or aggressive nail shapes, no distracting nail art.
+
+- SKIN, MAKEUP & HAIR:
+  • Skin texture must look real but perfected: pores can be visible, but there must be no heavy blemishes or AI artifacts.
+  • Avoid plastic, waxy, or over-airbrushed skin. Keep a natural high-end beauty retouching feel.
+  • Makeup must match the brand and product mood: tasteful, modern, and not overdone.
+  • Hair must be tidy and controlled, never messy in a distracting way (unless the scene specifically calls for a soft, natural look).
+  • Hair color and style must remain consistent with the reference model across all frames in the batch.
+
+- ENVIRONMENT & PROPS:
+  • Use props only if they support the luxury cosmetic/perfume story: flowers, glass, silk fabric, minimal jewelry, books, etc.
+  • Each prop must have a clear purpose and must not compete with the product for attention.
+  • Avoid cheap-looking plastic, clutter, or irrelevant items.
+  • Colors of props and environment must harmonize with the product packaging and not overpower it.
+
+- BRAND SAFETY:
+  • Never introduce random brands, logos, or text that do not belong to the reference product.
+  • Do not copy real brand names that are not present in the reference image.
+  • The generated scene must feel like a cohesive, professional cosmetic or perfume campaign image ready for print or web.`;
+
+            const realismBlock = `
+[REALISM & NATURAL POSES — NON-NEGOTIABLE PHOTOREALISM RULES]
+
+- OVERALL REALISM:
+  • All images must look like real high-end beauty photography, not AI art or illustration.
+  • No watercolor, no painting, no 3D render aesthetic, no toon or comic effect.
+  • Textures (skin, glass, metal, paper, fabric) must follow real-world physics: correct highlights, shadows, and reflections.
+
+- ANATOMY & POSES:
+  • The model’s anatomy must be correct in every frame: correct number of fingers, natural joint angles, realistic proportions.
+  • Hands must hold products in believable ways: fingers gently curved, thumb and fingers positioned logically on the bottle or compact.
+  • No twisted wrists, broken fingers, or impossible bending.
+  • No floating hands, floating heads, or separated body parts.
+
+- HANDS & SKIN DETAIL:
+  • Hands must have the same skin tone, texture, and lighting as the face and body of the model.
+  • Fingernails must be cleanly defined with natural or nude polish; no random or mismatched nail colors between frames.
+  • Avoid smudged, melted, or double-exposed fingers.
+  • Skin must have subtle pores and micro-texture; avoid plastic, blurred, or melted AI artifacts.
+
+- CONSISTENT MODEL IDENTITY:
+  • Within a single batch, the model’s face identity must remain stable: same bone structure, eye shape, nose, lips, and overall look.
+  • Do NOT change the model’s ethnicity, age, or facial structure from one frame to another.
+  • Do NOT change hairstyle dramatically within a batch unless explicitly specified by the blueprint.
+  • Body proportions (neck length, shoulder width, hand size) must stay consistent across all frames.
+
+- CONSISTENT PRODUCT IDENTITY:
+  • The core product (bottle, compact, lipstick, etc.) must remain the same physical object across all images in the batch.
+  • Do NOT change bottle shape, cap shape, logo position, or material between frames.
+  • Color of glass, liquid, and packaging must remain consistent in all shots.
+  • The label text must stay stable: no morphing fonts, no random extra words, no missing letters.
+
+- LIGHTING, SHADOWS & REFLECTIONS:
+  • Every shadow must be consistent with the position of the light sources.
+  • No impossible double shadows or conflicting light directions.
+  • Reflections on glass and metal must be aligned with the scene — no ghost reflections or random shapes.
+  • The product and model must share the same lighting environment so they feel like they belong together.
+
+- SURFACE CONTACT & PHYSICS:
+  • When products are placed on a surface, they must rest solidly with proper contact shadows.
+  • No floating products unless explicitly instructed (and even then, keep it minimal and elegant).
+  • Liquids (perfume inside glass, or cosmetic textures) must behave realistically: no gravity-defying shapes.
+  • Ribbons, fabrics, and other soft materials must drape realistically according to gravity and surface contact.
+
+- BATCH-WIDE REALISM CONSISTENCY:
+  • All frames in the batch must look like they were shot in the same real-world campaign session.
+  • Keep lighting style, color balance, and overall rendering consistent unless the blueprint explicitly defines variations.
+  • Do NOT mix photorealistic frames with painterly or stylized frames within the same batch.`;
+
+
+            // BƯỚC 6 — HUMAN TOUCH & REAL HAND POSE + SUPER RENDER ENGINE
+            const humanTouchEngine = `
+[HUMAN TOUCH & REAL HAND POSE ENGINE — PRIORITY LEVEL 0.5]
+
+- NATURAL HUMAN PRESENCE:
+  • The scene must feel like a real human photoshoot, not a mannequin or 3D render.
+  • Micro expressions must be subtle: calm confidence, soft smile, relaxed mouth and eyes.
+  • Avoid frozen, rigid faces or exaggerated cartoon expressions.
+
+- HAND ANATOMY & FINGERS:
+  • Each visible hand must have exactly five fingers with correct proportions.
+  • Joints must bend naturally; no broken, twisted or fused fingers.
+  • Fingers must never merge, melt or double-expose.
+  • Thumbs must be in the correct anatomical position, never duplicated or missing.
+
+- HOLDING THE PRODUCT:
+  • When the model holds a bottle or gift set, the grip must look gentle but secure.
+  • Fingers curve softly around the bottle without hiding the logo or important label text.
+  • The bottle must sit naturally in the palm or between the fingers with correct perspective and contact shadows.
+  • No floating bottles, no bottle intersecting or cutting through the hand.
+
+- NAILS & SKIN DETAIL:
+  • Nails must be clean, neat and consistent between frames (short to medium length, nude or soft neutral polish).
+  • No chipped polish, no extreme nail art that distracts from the product.
+  • Skin on hands must match the face in tone, texture and lighting.
+  • Preserve natural skin micro-texture; avoid plastic or blurred AI look.
+
+- HAND POSE VARIETY (ACROSS THE BATCH):
+  • Use a variety of natural hand poses: presenting the bottle forward, holding it near the face, resting on a table, adjusting a ribbon on the gift box, etc.
+  • Keep all poses believable and comfortable; avoid extreme stretching or unnatural angles.
+  • Hands must support the storytelling of gifting and luxury, never steal attention away from the product.
+
+- CONNECTION BETWEEN MODEL, PRODUCT & CAMERA:
+  • When the model looks at the product, the gaze must align correctly with the bottle position.
+  • When the model looks at the camera, hands and bottle should still be clearly visible and well composed inside the frame.
+  • The viewer should feel a human emotional connection with the scene: aspirational but still believable.
+`;
+
+            const superRenderEngine = `
+[SUPER RENDER ENGINE — ULTRA PHOTOREALISM MODE]
+
+- TEXTURE ENGINE:
+  • All textures (skin, glass, metal, ribbon, paper, fabric) must look physically correct.
+  • No melted textures, no AI blur patches, no watercolor.
+  • Preserve micro-details: pores, glass bevels, cap textures.
+
+- SHARPNESS ENGINE:
+  • Apply high-end optical sharpness (NOT digital oversharpen).
+  • Details must be crisp like Canon RF L-series lens.
+  • Keep edges of bottle and model perfectly clean.
+
+- GLASS & LIQUID ENGINE:
+  • Glass transparency must be perfect with clean refractions.
+  • Internal liquid must show accurate color and light falloff.
+  • NO fake highlights, NO cartoon glow.
+
+- METAL ENGINE:
+  • Metallic caps must show realistic specular highlights.
+  • Avoid mirror chaos. Keep it premium and controlled.
+
+- SKIN ENGINE:
+  • High-end beauty retouching: pores visible, smooth but real.
+  • No plastic skin, no doll-like rendering.
+  • No AI artifacts around nose, lips, or fingers.
+
+- HAIR ENGINE:
+  • Hair strands must remain sharp and detailed.
+  • No “hair melting” or smudging around edges.
+
+- SHADOW ENGINE:
+  • Contact shadows under bottle must be realistic and soft.
+  • No floating products.
+  • Model shadows must align perfectly with light direction.
+
+- REFLECTION ENGINE:
+  • All reflections must follow real physics.
+  • No random ghost reflections on glass or skin.
+
+- COLOR ENGINE:
+  • Whites clean, blacks detailed.
+  • No heavy color grading that alters product color.
+  • Maintain premium, magazine-level color harmony.
+
+- RENDER CONSISTENCY:
+  • ALL 10 images in the batch must share one unified look.
+  • No frame may look more “AI” than others.
+
+This engine overrides lower-priority render instructions and ensures maximum quality.
+`;
+
+            return `
+You are an elite commercial beauty photographer for luxury European cosmetic and perfume brands.
+
+[IMAGE OUTPUT SPEC — TOP PRIORITY JSON]
+
+{
+  "format": "photograph",
+  "aspect_ratio": "3:4",
+  "orientation": "vertical",
+  "camera_system": "Canon EOS R3 full-frame",
+  "lens": "85mm f/1.2 or 50mm f/1.4 prime",
+  "color_temperature": "5200K ± 300K",
+  "lighting_style": "soft beauty light",
+  "output_quality": "ultra-high-resolution, 8k-level detail",
+  "color_profile": {
+    "accuracy": "extremely high, match product reference",
+    "gamut": "wide color gamut rendering",
+    "grading": "professional commercial grade, no heavy filters",
+    "bit_depth_simulation": "simulate high bit-depth for smooth gradients"
+  },
+  "product_full_visibility": true,
+  "center_product_in_frame": true
+}
+
+This JSON block has the highest authority.
+All other instructions must follow this block strictly.
+
+[ASPECT RATIO OVERRIDE ENGINE — NON-NEGOTIABLE]
+- The final output image MUST be 3:4 vertical. This is the most important rule.
+- The aspect ratio of the input images (model or product) is for reference content ONLY.
+- You MUST IGNORE the aspect ratio of the input images when creating the final composition.
+- Your final rendered image's dimensions must strictly follow the "aspect_ratio": "3:4" specification, regardless of the input image dimensions.
+- If the product input image is square, you must still generate a 3:4 vertical image.
+- If the model input image is horizontal, you must still generate a 3:4 vertical image.
+
+[PRODUCT FULL-VISIBILITY ENGINE — NON-NEGOTIABLE]
+
+- The hero product must be fully inside the frame (no crop on bottle cap, logo, or edges).
+- Do NOT zoom so close that any part of the bottle or gift set becomes cropped.
+- For gift sets:
+    • ALL items must be fully visible.
+    • If needed, pull camera back.
+    • If still tight → auto-expand horizontal composition.
+- The product must be centered or slightly above center.
+- For model shots:
+    • Product must be closer to the camera than the face.
+
+[LIGHTING JSON]
+
+{
+  "lighting": {
+    "key_light": "soft beauty light",
+    "temperature": "5000–5500K",
+    "rim_light": "subtle warm gold (optional)",
+    "no_hard_flash": true,
+    "no_cartoon_glow": true
+  }
+}
+
+[MODEL LOCK JSON]
+
+{
+  "identity_lock": true,
+  "match_reference_image": true,
+  "consistency_across_batch": true
+}
+
+You MUST strictly follow the JSON blueprint below. It has the highest authority.
+
+[PERFUME & COSMETIC AD BLUEPRINT — HIGHEST AUTHORITY]
+${blueprintJson}
+
+${luxuryPrinciplesBlock}
+
+${realismBlock}
+
+${humanTouchEngine}
+
+[SEASONAL / OCCASIONAL THEME FROM BLUEPRINT]
+${seasonalBlock}
+[SEASONAL THEME ENGINE — ULTRA PREMIUM MODE]
+
+- Use the selected holiday/seasonal theme as the dominant visual direction.
+- All color palettes, lighting tones, background structure and decorative elements must follow this theme consistently.
+- Maintain a premium European cosmetic advertising feel — similar quality to Dior, Chanel, YSL, Lancôme.
+
+[APPLY THE FOLLOWING FROM SCENE BLUEPRINT]
+${sceneBlueprint.seasonalPromptBlock}
+
+- Seasonal elements must enhance the luxury mood, NOT overpower it.
+- Props like ribbons, sparkles, candles, flowers, balloons, or snow must appear in 5–20% density.
+- Never cover the product’s main label/logo.
+- Keep seasonal decor tasteful, minimal, and high-end.
+- If model appears: makeup, mood, vibe must subtly match the seasonal tone.
+
+${aspectInstruction}
+
+[SHOT DESCRIPTION FOR THIS FRAME]
+- SCENE SUMMARY: ${sceneDesc}
+- SHOT ROLE: ${angleSpec?.photoRole || "beauty_ad"} 
+- POSE / ACTION: ${poseDesc}
+
+[SHOT COMPOSITION & FRAMING RULES]
+[SHOT COMPOSITION ENGINE — PREMIUM COSMETICS ADVERTISING]
+
+- GENERAL FRAMING:
+  • Treat every frame as a carefully composed beauty advertisement, not a random snapshot.
+  • The composition must always respect the ${finalAspectRatio} aspect ratio and keep the main subject centered or tastefully offset.
+  • Never crop the image in a way that cuts through eyes, lips, bottle caps, or main logos in an awkward way.
+- Always create a clean, balanced, and premium beauty composition.
+- Treat every frame as a real advertising layout, not an experiment.
+
+- MODEL & FACE IN FRAME:
+  • When the model is included, keep the face clearly visible and well-lit.
+  • Preferred framing for beauty shots: head-and-shoulders or upper chest, with a gentle three-quarter view of the face.
+  • Eyes should generally face the camera or be slightly averted in a believable, elegant way.
+  • Avoid extreme close-ups that distort facial features unless explicitly requested.
+• PRODUCT POSITION:
+  – The product must be centered or placed slightly above center.
+  – Keep full bottle/set inside the frame.
+  – Never crop the cap, logo, or key text.
+  – Maintain elegant spacing around the product.
+
+- PRODUCT POSITION & VISIBILITY:
+  • The product must be placed where it is instantly readable: near the face, in the hands, or clearly foregrounded.
+  • At least one key product unit must show the logo and main label fully readable.
+  • Do not hide the product behind hair, hands, or props.
+  • Avoid placing the product at the extreme edges of the frame where it appears cropped or secondary.
+• MODEL POSITION (nếu có):
+  – Face softly lit, shown in elegant beauty angles.
+  – Head & shoulders or upper-chest framing preferred.
+  – Face slightly angled (15–30°) for depth and real photoshoot feel.
+
+- HAND & PRODUCT INTERACTION:
+  • Hands should interact with the product: gently holding, offering, or presenting it.
+  • Avoid stiff or unnatural hand shapes; fingers should be relaxed yet intentional.
+  • Keep fingers away from blocking the logo or main label.
+  • Hands and product must be arranged to form pleasing lines and shapes within the frame.
+• MODEL + PRODUCT COMBO:
+  – If model holds the product: hand must not block the logo.
+  – Product must be closest to camera, face slightly behind for depth.
+  – Keep a clean V-shape or triangle composition for premium look.
+
+- BALANCE, NEGATIVE SPACE & DEPTH:
+  • Use negative space (empty areas) to draw attention to the product and model’s face.
+  • Balance the composition: if the model is on one side, counterbalance with product placement or background elements.
+  • Use depth (foreground, midground, background) to create a three-dimensional feel.
+  • Background blur and bokeh should support, not overpower, the main subject.
+• GIFT SCENE LOGIC:
+  – Ribbons, boxes, ornaments at 5–20% density.
+  – Decor must always frame the product, never dominate it.
+  – Background blur must be soft, warm, and luxury.
+
+[CENTERING RULE]
+
+- Product must be horizontally centered.
+- Vertical placement: 45–55% frame height.
+- If model included → product stays foreground, face slightly behind.
+
+[PRODUCT FIDELITY JSON]
+
+{ "product": { "preserve_shape": true, "preserve_color": true, "preserve_logo": true, "no_invented_labels": true, "no_brand_mixing": true } }
+
+- ORIENTATION & STABILITY:
+  • Do NOT use Dutch angles or extreme tilts: keep vertical lines (walls, bottles, boxes) straight and stable.
+  • For top-down or flatlay shots, keep the camera directly above the scene with clean geometry.
+  • Always ensure the product and model feel firmly grounded and not accidentally cut off. 
+• DEPTH & LAYERING:
+  – Use 3 layers: foreground (light decor), midground (product), background (bokeh).
+  – Keep bottle vertical, zero warp.
+  – Use tasteful shallow DOF for a Dior-like softness.
+
+• CAMERA PERSPECTIVE:
+  – Straight-on, eye-level for product shots.
+  – Slight high-angle allowed for gift sets.
+  – No Dutch-angle tilt, no ultra-wide.
+
+• COLOR & MOOD:
+  – Use the seasonal palette strongly but premium.
+  – Always maintain clean high-end cosmetics aesthetic.
+
+• NO CLUTTER:
+  – No random objects.
+  – No excessive decorations.
+  – Keep minimal but luxury.
+
+[GIFT SET RULES — NON-NEGOTIABLE PRODUCT FIDELITY]
+
+- BOTTLE COUNT & CONFIGURATION:
+  • If the product is marked as a gift set (2, 3, or 4 bottles), you must reproduce EXACTLY that number of items — no more, no less.
+  • Do NOT invent additional bottles, miniatures, or accessories that are not part of the reference.
+  • Do NOT remove any bottle or key element that appears in the reference gift set.
+
+- ARRANGEMENT & PROPORTIONS:
+  • You may freely rearrange the bottles and gift box to create the most elegant and balanced gift layout.
+  • All items from the gift set must remain fully visible inside the frame – do NOT hide small bottles behind bigger ones or behind the box.
+  • Keep realistic size relationships: the same bottle must not suddenly become much bigger or smaller than in the reference, but the hero bottle may be slightly more prominent.
+  • Bottles and caps must stand upright and feel physically stable on the surface – no floating, no impossible tilting.
+
+- BOXES, TRAYS & INSERTS:
+  • Gift boxes must retain their original shape, dimensions, and construction (lid, base, trays, inserts).
+  • Interior trays or cutouts must match the positions and sizes of the bottles.
+  • Do not warp or bend the box in unrealistic ways; keep edges straight and clean.
+
+- LOGOS, LABELS & TEXT:
+  • All visible logos and text on bottles, boxes, and inserts must remain sharp and readable.
+  • Do NOT change the font style, logo placement, or wording.
+  • Do NOT add new brand names, remove existing names, or merge brands.
+
+- COLOR & MATERIAL FIDELITY:
+  • Bottle glass, liquid, cap material, and box finish (matte, glossy, metallic) must match the reference.
+  • Colors must stay consistent across all frames: no random color shifting of the same product.
+  • Metallic foils, embossing, and special finishes must look realistic and premium.
+
+- DECORATION & RIBBONS:
+  • Ribbons, bows, and decorative elements must be minimal and elegant.
+  • Decorations must never cover the main logo, product name, or crucial design features.
+  • Avoid excessive glitter, confetti, or cheap-looking decorations that break the luxury feeling.
+
+- HERO SHOTS:
+  • For hero shots, the entire gift set must be fully visible and undistorted.
+  • Do not crop through bottle caps, box edges, or major logos.
+  • The gift set must be presented as a cohesive, premium object ready for advertising or e-commerce. 
+
+[FULL-VERTICAL FRAMING ENGINE — UNIVERSAL MODE]
+
+- For ANY aspect ratio (4:3, 3:4, 9:16), the full product set MUST appear completely inside the frame.
+
+- GIFT SET POSITIONING:
+  • Always place the full gift set in the LOWER 40–55% of the frame.
+  • Keep the UPPER HALF of the frame free for background, bokeh, decor, or model face.
+  • This guarantees enough horizontal width to show every item without cropping.
+
+- BOX HANDLING:
+  • The gift box may be slightly behind, angled, or reduced in visual dominance.
+  • Maximum allowed vertical height for the box: 55% of the entire frame.
+  • The box must NOT occupy the whole vertical space in 9:16 or 3:4 layouts.
+
+- AUTO COMPOSITION EXPANSION:
+  • If the AI detects that all items cannot fit comfortably:
+    – Automatically pull the camera back,
+    – Expand the internal composition horizontally,
+    – Increase padding around products,
+    – NEVER crop out small items.
+
+- PRODUCT ARRANGEMENT FREEDOM:
+  • The AI may arrange the set freely (front-back, left-right, staggered),
+    but ALL items must remain visible.
+  • No item may be hidden behind the box or a larger bottle.
+  • No item may be excluded for aesthetic reasons.
+
+- PRIORITY:
+  • Showing the complete gift set ALWAYS overrides artistic choices.
+  • Bokeh, lighting, ribbons, and decor must NOT obstruct any product.
+
+This Universal Framing Engine guarantees full-set visibility across ALL aspect ratios.
+[MULTI-PRODUCT ARRANGEMENT RULES — SYMMETRY & CLARITY]
+
+- OVERALL ARRANGEMENT:
+  • When multiple products are shown together, the layout must be clear, organized, and visually balanced.
+  • Prefer simple, symmetrical arrangements unless the reference or blueprint demands asymmetry.
+  • Do not create chaotic clusters where individual products are hard to distinguish.
+
+- ALIGNMENT & LEVELING:
+  • Align bottles by their bases or caps according to the shot style:
+    – Shelf-style or tabletop: align by bases.
+    – Line-up or brand family shot: align by caps or top edges as needed.
+  • Ensure bottles stand upright, with no unrealistic tilting unless deliberately staged.
+  • Avoid overlapping products in a way that hides logos or critical design elements.
+
+- SPACING & OVERLAP:
+  • Keep consistent spacing between products to avoid clutter.
+  • Bottles may overlap slightly, but important labels and logos must remain visible.
+  • Do not merge or fuse bottles together; each product must remain a separate, clearly defined object.
+
+- REFLECTIONS & SHADOWS:
+  • Reflections in glossy surfaces (glass table, mirror, polished stone) must be consistent for all products.
+  • Shadows must fall in the same direction, with similar softness, according to the global lighting setup.
+  • No random dark blobs or mismatched shadows under some bottles but not others.
+
+- BRAND FAMILY CONSISTENCY:
+  • When multiple related products (e.g., same line or collection) are shown, they must share consistent design details and colors.
+  • Do NOT mix unrelated products that visually conflict with the main hero product unless specified in the blueprint.
+  • If the blueprint specifies a “hero” product, position it in the most prominent spot (center or slightly forward).
+
+- DEPTH & LAYERS:
+  • Use foreground, midground, and background placement to show depth without hiding key details.
+  • Products placed behind others must still be partially readable and not fully obstructed.
+  • Never stack products in physically impossible ways or in unstable piles that break realism. 
+
+[MODEL & PRODUCT LOCK — NON-NEGOTIABLE]
+
+- MODEL IDENTITY LOCK:
+  • If a model reference image is provided, you must lock onto that exact face identity across all images in this batch.
+  • Keep the same facial structure: jawline, cheekbones, nose shape, eye shape, lips, and general proportions.
+  • Skin tone must remain consistent: do not randomly lighten, darken, or change undertones between frames.
+  • Hairstyle must stay within the same family: same length, general shape, and color. No sudden radical hairstyle changes.
+  • Do NOT switch to a different model, change ethnicity, or alter age appearance within the batch.
+
+- HAND & BODY CONSISTENCY:
+  • Hands must clearly belong to the same model: same skin tone, same general shape and size.
+  • Avoid mismatched hands (e.g., one frame with long nails, another with short nails) unless explicitly approved in the blueprint.
+  • Body type (neck length, shoulder width, arm thickness) must remain stable throughout the batch.
+
+- PRODUCT FIDELITY LOCK:
+  • The cosmetic/perfume product from the reference image must remain EXACTLY the same object in all frames.
+  • Do NOT change the bottle shape, cap design, sprayer design, or ornamental details.
+  • Do NOT change glass color, liquid color, or packaging color.
+  • Do NOT change or invent new logo text, label layouts, or brand names.
+  • Do not add extra patterns, stickers, or decorations to the bottle or box unless explicitly requested.
+
+- BRAND & SKU CONSISTENCY:
+  • Treat the reference product as one fixed SKU (stock keeping unit) for this entire batch.
+  • Do NOT introduce other random SKUs or similar-looking products in the same batch.
+  • When variations are required (e.g., different angles or distances), they must always show the same core product. 
+
+[BATCH-WIDE MODEL & PRODUCT CONSISTENCY — SUPER HARD LOCK | PRIORITY 0]
+
+- ONE BATCH = ONE MODEL IDENTITY:
+  • All images generated for this batch must feature the SAME model identity.
+  • Do not swap models between frames, even slightly. No “similar” faces — it must be the same face.
+
+- ONE BATCH = ONE HERO PRODUCT (OR ONE FIXED GIFT SET):
+  • The hero product (or gift set) from the reference must remain unchanged across all frames.
+  • All variations (different angles, crops, compositions) must still clearly depict the same product.
+
+- CROSS-FRAME CONTINUITY:
+  • The viewer should feel that all images come from the same professional photoshoot session.
+  • Maintain consistent lighting style, color grading, and rendering quality across the entire batch.
+  • If the season/theme changes slightly (e.g., Christmas props), it must still feel like the same campaign series.
+${superRenderEngine}
+
+- ZERO TOLERANCE FOR IDENTITY OR PRODUCT DRIFT:
+  • Do NOT allow the model’s face to gradually morph from one frame to another.
+  • Do NOT allow product shapes, logos, or colors to drift or mutate across frames.
+  • If there is any conflict between creativity and consistency, ALWAYS choose consistency with model identity and product fidelity first.
+
+[USER NOTES — SUPER HIGH PRIORITY]
+${sanitizeNotes(userNotes) || "None."}
+
+[CAMERA & OUTPUT ENGINE — PRIORITY LEVEL 3]
+- Camera System Simulation:
+  • Simulate a Canon EOS R3 full-frame digital camera body or an equivalent high-end full-frame system.
+  • Emulate Canon-style color science: warm natural skin tones, smooth highlight roll-off, rich midtones and clean shadows.
+
+- Lens & Perspective:
+  • Use a professional prime lens between 50mm and 85mm (full-frame equivalent).
+  • For shots with the model’s face, default to an 85mm portrait look with zero wide-angle distortion.
+  • For product-only and close-up shots, simulate a 50–70mm macro/prime look: very low distortion, straight bottle edges.
+  • Absolutely NO ultra-wide, fisheye or GoPro perspective. No stretched hands, no warped bottle shape, no exaggerated perspective.
+
+- Camera Position & Angle:
+  • For normal beauty/lifestyle shots, keep camera height around the model’s chest-to-eye level for a natural luxury advertising perspective.
+  • Avoid extreme low-angle shots from the floor or extreme high-angle shots from the ceiling.
+  • For flatlay or “top_down” compositions, place the camera directly above the products, keeping lines clean and not warped.
+
+- Depth of Field:
+  • When the model is in frame, simulate an aperture around f/1.8–f/2.8: soft creamy bokeh in the background, but the model’s face and the product bottle/logo must remain tack-sharp.
+  • For pure product, macro-detail and gift-set shots, use a slightly deeper depth of field (f/4–f/8 feel) so all bottles, caps and labels stay clearly readable.
+
+- Orientation & Framing:
+  • The final image MUST respect the ${finalAspectRatio} aspect ratio and follow the ASPECT RATIO instructions above.
+  • Do NOT rotate the frame or create Dutch angles; keep verticals stable and elegant.
+  • Always keep the full product (bottle, cap and main label) completely inside the frame, unless the shot description explicitly calls for a macro crop.
+  • For gift sets, the entire set and box edges must be fully visible and undistorted in hero shots.
+  • Avoid any crop that cuts through important logo text or bottle caps in a confusing way.
+
+- Image Quality & Rendering:
+  • Generate an ultra-high-resolution, photorealistic image suitable for top-tier cosmetic and perfume campaigns.
+  • Look must be clean and noise-free, with fine micro-contrast — no watercolor, no cartoon, no 3D CGI or painting style.
+  • Glass, metal and liquid surfaces must show realistic reflections, highlights and refractions.
+  • Product colors must remain 100% accurate to the reference image; do NOT apply heavy filters that shift color.
+  • Whites must stay clean (not dirty yellow or blue); blacks must retain detail (not crushed or noisy).
+  • Never blur or distort the main logo, product name or any important text on the bottle or box.`;
+        }
+        function buildPayloadForPose(angleSpec, allBase64Data) {
+            const { modelBase64, productBase64 } = allBase64Data;
+            const headText = buildMasterPromptHeader(angleSpec, CURRENT_BATCH_BLUEPRINT?.cameraBlueprint?.aspect_ratio);
+
+            const parts = [{ text: headText }];
+            if (modelBase64) {
+                parts.push({ text: "MODEL_REFERENCE_IMAGE" }, { inlineData: { mimeType: modelFile.type, data: modelBase64 } });
+            }
+            if (productBase64) {
+                parts.push({ text: "PRODUCT_REFERENCE_IMAGE" }, { inlineData: { mimeType: productFile.type, data: productBase64 } });
+            }
+
+            return {
+                contents: [{ role: "user", parts }],
+                generationConfig: CURRENT_BATCH_BLUEPRINT.generationConfig
+            };
+        }
+
+        async function runOneJob(angleSpec, signal, allBase64Data) {
+            try {
+                if (signal.aborted) throw new Error('Đã dừng theo yêu cầu.');
+                const payload = buildPayloadForPose(angleSpec, allBase64Data);
+                const url = await generateImage(payload, signal);
+                if (!url) return null;
+                return url;
+            } catch (error) {
+                if (error.name === 'AbortError') throw error;
+                console.error(`Không tạo được hình ảnh hợp lệ cho kịch bản "${angleSpec.notes}"`, error);
+                return null;
+            }
+        }
+
+        async function runQueue(angleList, signal, onImageGenerated, allBase64Data) {
+            let jobCursor = 0;
+            let completedCount = 0;
+            const TOTAL_SHOTS = angleList.length;
+
+            const workers = new Array(CONCURRENT_REQUESTS).fill(0).map(async() => {
+                while (!signal.aborted && !isBatchDone) {
+                    const index = jobCursor++;
+                    if (index >= TOTAL_SHOTS) break;
+                    
+                    const angleSpec = angleList[index];
+                    if (!angleSpec) break;
+
+                    try {
+                        const url = await runOneJob(angleSpec, signal, allBase64Data);
+                        if (url && !signal.aborted && !isBatchDone) {
+                            const currentCompleted = ++completedCount;
+                            await onImageGenerated(url, currentCompleted, TOTAL_SHOTS, angleSpec);
+                        }
+                    } catch (error) {
+                        if (error.name === 'AbortError') throw error;
+                        console.error("Lỗi khi chạy job cho angle:", angleSpec, error);
+                    }
+                }
+            });
+
+            await Promise.all(workers);
+        }
+
+        // --- Image Post-processing & UI ---
+        async function applyWatermark(base64Url, text) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    ctx.drawImage(img, 0, 0);
+
+                    // --- TÙY CHỈNH WATERMARK TẠI ĐÂY (COPY TỪ TAOANHTHEOMUA) ---
+
+                    // Cài đặt font và style
+                    const fontSize = canvas.width * 0.08; // Kích thước chữ bằng 8% chiều rộng ảnh
+                    ctx.font = `600 ${fontSize}px Inter, Arial`;
+                    ctx.fillStyle = 'rgba(255,255,255,0.35)'; // Độ mờ 35%
+                    ctx.textAlign = 'center'; // Căn giữa theo chiều ngang
+                    ctx.textBaseline = 'middle'; // Căn giữa theo chiều dọc
+
+                    // Tính toán vị trí
+                    const x = canvas.width / 2; // Tọa độ X: chính giữa ảnh
+                    const y = canvas.height * 0.75; // Tọa độ Y: 75% từ trên xuống (khoảng 2/3 ảnh)
+
+                    // Lấy text, nếu không có thì dùng mặc định
+                    const watermarkText = (text || 'Top-Trendy.Cz').trim() || 'Top-Trendy.Cz';
+
+                    // Thêm viền cho chữ để nổi bật hơn
+                    ctx.strokeStyle = 'rgba(0,0,0,0.25)';
+                    ctx.lineWidth = Math.max(1, canvas.width * 0.002);
+                    ctx.strokeText(watermarkText, x, y);
+
+                    // Vẽ chữ chính
+                    ctx.fillText(watermarkText, x, y);
+
+                    resolve(canvas.toDataURL('image/png'));
+                };
+                img.onerror = (err) => reject(new Error("Không thể tải ảnh để đóng dấu."));
+                img.src = base64Url;
+            });
+        }
+        
+        async function downloadImage(dataUrl, filename) { try { const blob = await (await fetch(dataUrl)).blob(); const url = window.URL.createObjectURL(blob); const a = document.createElement('a'); a.style.display = 'none'; a.href = url; a.download = filename; document.body.appendChild(a); a.click(); window.URL.revokeObjectURL(url); a.remove(); } catch (e) { console.error('Download failed:', e); window.open(dataUrl, '_blank'); } }
+
+        // --- Lightbox Logic ---
+        function showImageAtIndex(index) {
+            if (!currentGalleryImages.length) return;
+            currentIndex = (index + currentGalleryImages.length) % currentGalleryImages.length;
+            const imageData = currentGalleryImages[currentIndex];
+            lightboxImage.src = imageData.url;
+            
+            lightboxDownload.onclick = (e) => {
+                e.stopPropagation();
+                downloadImage(imageData.url, imageData.filename);
+            };
+
+            isZoomed = false;
+            lightboxImage.classList.remove('zoomed');
+            lightboxImage.style.cursor = 'zoom-in';
+        }
+
+        function openLightbox(images, startIndex) {
+            currentGalleryImages = images;
+            lightbox.classList.remove('hidden');
+            const showNav = images.length > 1;
+            lightboxPrev.classList.toggle('hidden', !showNav);
+            lightboxNext.classList.toggle('hidden', !showNav);
+            showImageAtIndex(startIndex);
+        }
+
+        async function loadPresetModel(url, buttonElement) {
+            if (!url || !buttonElement) return;
+
+            const modelPreview = document.getElementById('model-preview');
+            const modelDeleteBtn = document.getElementById('model-delete-btn');
+            const modelUploadBox = document.getElementById('model-upload');
+
+            modelInput.value = '';
+            document.querySelectorAll('.preset-model-btn').forEach(btn => btn.classList.remove('selected'));
+            buttonElement.classList.add('selected');
+
+            const existingSpinner = document.getElementById('preset-loading-spinner');
+            if (existingSpinner) existingSpinner.remove();
+            modelUploadBox.insertAdjacentHTML('beforeend', `<div id="preset-loading-spinner" class="absolute inset-0 bg-white/80 dark:bg-slate-800/80 flex items-center justify-center z-20"><div class="loader"></div></div>`);
+            modelPreview.classList.add('hidden');
+
+            const file = await urlToFile(url, `preset_model_${Date.now()}.png`, "image/png");
+
+            const spinner = document.getElementById('preset-loading-spinner');
+            if (spinner) spinner.remove();
+
+            if (file) {
+                modelFile = file;
+                modelUploadBox.classList.add('has-image');
+                const dataUrl = await fileToBase64(file);
+                originalModelDataUrl = dataUrl;
+                modelPreview.src = dataUrl;
+                modelPreview.classList.remove('hidden');
+                document.getElementById('model-delete-btn').classList.remove('hidden');
+                document.getElementById('model-crop-btn').classList.remove('hidden');
+                updateGenerateAvailability();
+            } else {
+                errorText.textContent = 'Không thể tải ảnh người mẫu. Vui lòng kiểm tra lại đường dẫn và thử lại.';
+                errorMessage.classList.remove('hidden');
+                buttonElement.classList.remove('selected');
+                modelFile = null;
+                updateGenerateAvailability();
+            }
+        }
+
+        // --- UI Setup ---
+        function setupPresetModels() {
+            const container = document.getElementById('preset-model-buttons');
+            if (!container) return;
+            container.innerHTML = '';
+            PRESET_MODELS.forEach((model) => {
+                const button = document.createElement('button');
+                button.className = 'preset-model-btn relative aspect-square rounded-lg overflow-hidden border-2 border-transparent hover:border-yellow-400 focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-300 transition-all transform hover:scale-105 active:scale-95';
+                button.dataset.url = model.url;
+                button.title = model.label;
+                button.innerHTML = `
+                    <img src="${model.url}" alt="${model.label}" class="w-full h-full object-contain">
+                    <div class="absolute inset-x-0 bottom-0 bg-black/50 p-1"><p class="text-white text-xs font-medium text-center truncate">${model.label}</p></div>
+                `;
+                container.appendChild(button);
+            });
+        }
+
+        function setupScenes() {
+            const container = document.getElementById('scene');
+            if (!container) return;
+            container.innerHTML = '';
+            COSMETIC_SCENES.forEach(scene => {
+                container.innerHTML += `<option value="${scene.id}">${scene.label}</option>`;
+            });
+        }
+
+        const PRODUCT_NAME_LIBRARY = ["Aura", "Bloom", "Elixir", "Glimmer", "Haven", "Icon", "Jolt", "Karma", "Loom", "Muse", "Nova", "Oasis", "Pulse", "Quest", "Rift", "Solace", "Tide", "Verve", "Zenith"];
+        function setRandomProductName() {
+            const productNameInput = document.getElementById('product-file-name');
+            if (productNameInput && !productNameInput.value) {
+                const randomName = PRODUCT_NAME_LIBRARY[Math.floor(Math.random() * PRODUCT_NAME_LIBRARY.length)];
+                productNameInput.value = randomName;
+            }
+        }
+
+        function canGenerate(){
+          return !!(modelFile && productFile && !isProductAnalysisInProgress && productTypeSelect.value !== 'auto');
+        }
+        function updateGenerateAvailability(){
+          const ok = canGenerate();
+          generateBtn.disabled = !ok;
+          generateBtn.title = ok ? 'Sẵn sàng tạo ảnh' : 'Vui lòng tải ảnh người mẫu và sản phẩm.';
+        }
+
+        // --- Event Listeners ---
+        document.addEventListener('DOMContentLoaded', ()=> { 
+            setupScenes();
+            setupPresetModels();
+            updateGenerateAvailability(); 
+
+            const firstPortraitBtn = document.querySelector('#preset-model-buttons .preset-model-btn');
+            if (firstPortraitBtn) loadPresetModel(firstPortraitBtn.dataset.url, firstPortraitBtn);
+        });
+        
+        // Sửa lỗi nhỏ: không cho click vào crop button khi đang kéo thả
+        cropModal.addEventListener('click', e => e.stopPropagation());
+        lightboxClose.addEventListener('click', () => { lightbox.classList.add('hidden'); if (isZoomed) { isZoomed = false; lightboxImage.classList.remove('zoomed'); } });
+        lightbox.addEventListener('click', (e) => { if (e.target === lightbox) { lightbox.classList.add('hidden'); if (isZoomed) { isZoomed = false; lightboxImage.classList.remove('zoomed'); } } });
+        lightboxPrev.addEventListener('click', (e) => { e.stopPropagation(); showImageAtIndex(currentIndex - 1); });
+        lightboxNext.addEventListener('click', (e) => { e.stopPropagation(); showImageAtIndex(currentIndex + 1); });
+        
+        lightboxImage.addEventListener('click', (e) => {
+            e.stopPropagation();
+            isZoomed = !isZoomed;
+            lightboxImage.classList.toggle('zoomed', isZoomed);
+            lightboxImage.style.cursor = isZoomed ? 'zoom-out' : 'zoom-in';
+        });
+
+        document.addEventListener('keydown', (e) => { if (!lightbox.classList.contains('hidden')) { if (e.key === 'ArrowLeft') showImageAtIndex(currentIndex - 1); else if (e.key === 'ArrowRight') showImageAtIndex(currentIndex + 1); else if (e.key === 'Escape') lightboxClose.click(); } });
+        
+        presetModelButtonContainer.addEventListener('click', async (e) => {
+            const selectedBtn = e.target.closest('.preset-model-btn');
+            if (selectedBtn) {
+                loadPresetModel(selectedBtn.dataset.url, selectedBtn);
+            }
+        });
+
+        // BẢN MỚI – tái tạo ảnh theo đúng khổ ảnh đang chọn + pipeline mới
+        async function regenerateImage(imageIndex) {
+            const imageData = generatedImagesData[imageIndex];
+            if (!imageData || !imageData.angleSpec) return;
+
+            const resultItem = resultGallery.children[imageIndex];
+            const btnElement = resultItem.querySelector('.regenerate-btn');
+            const imgElement = resultItem.querySelector('img');
+            const spinnerOverlay = resultItem.querySelector('.spinner-overlay');
+
+            btnElement.disabled = true;
+            btnElement.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`;
+            spinnerOverlay.classList.remove('hidden');
+            imgElement.style.opacity = '0.5';
+
+            try {
+                const singleRegenController = new AbortController();
+
+                // 1) Chuẩn bị lại base64 model + product
+                const [modelDataUrl, productDataUrl] = await Promise.all([
+                    fileToBase64(modelFile),
+                    fileToBase64(productFile)
+                ]);
+                const modelBase64 = parseDataUrl(modelDataUrl).data;
+                const productBase64 = parseDataUrl(productDataUrl).data;
+                const allBase64Data = { modelBase64, productBase64 };
+
+                // 2) Gọi lại AI với cùng angleSpec (góc chụp cũ)
+                const newUrl = await runOneJob(imageData.angleSpec, singleRegenController.signal, allBase64Data);
+                if (!newUrl) throw new Error("Tái tạo thất bại.");
+
+                // 3) KHÔNG cắt lại khổ ảnh nữa – dùng nguyên ảnh AI trả về
+                const watermarkEnabled = document.getElementById('watermark-enabled')?.checked;
+                const watermarkText = document.getElementById('watermark-text')?.value || '';
+
+                let finalUrl = watermarkEnabled ? await applyWatermark(newUrl, watermarkText) : newUrl;
+
+                // 5) Cập nhật ảnh trong lưới + trong mảng dữ liệu
+                imgElement.src = finalUrl;
+                generatedImagesData[imageIndex].url = finalUrl;
+
+            } catch (error) {
+                console.error(`Lỗi khi tái tạo ảnh ${imageIndex}:`, error);
+            } finally {
+                btnElement.disabled = false;
+                btnElement.innerHTML = `<i class="fa-solid fa-arrows-rotate"></i>`;
+                spinnerOverlay.classList.add('hidden');
+                imgElement.style.opacity = '1';
+            }
+        }
+
+        generateBtn.addEventListener('click', async () => {
+            if (generateBtn.disabled) return;
+
+            CURRENT_BATCH_BLUEPRINT = buildBatchBlueprint();
+            console.log('Batch blueprint:', CURRENT_BATCH_BLUEPRINT);
+
+            const controller = new AbortController(); 
+            cancelBtn.onclick = () => controller.abort();
+            
+            resultContainer.classList.remove('hidden');
+            progressBarContainer.classList.remove('hidden');
+            errorMessage.classList.add('hidden');
+            resultGallery.innerHTML = ''; 
+            
+            generateBtn.classList.add('hidden');
+            cancelBtn.classList.remove('hidden');            
+            
+            let baseFileName = document.getElementById('product-file-name').value.trim() || "Cosmetic_Ad";
+            
+            document.querySelectorAll('input, select, textarea, button').forEach(el => el.disabled = true);
+            cancelBtn.disabled = false;
+
+            generateBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Đang tạo...'; 
+            loadingStatus.textContent = `Đang khởi động...`;
+            progressBar.style.width = '0%';
+            progressPercent.textContent = '0%';
+            generatedImagesData = [];
+            isBatchDone = false;
+
+            const onImageGenerated = async (dataUrl, count, total, angleSpec) => {
+                if (isBatchDone) return;
+                loadingStatus.textContent = `Đã tạo ${count}/${total} ảnh. Đang xử lý...`;
+                const progress = Math.round((count / total) * 100);
+                progressBar.style.width = `${progress}%`;
+                progressPercent.textContent = `${progress}%`;
+                
+                // KHÔNG cắt lại theo khổ ảnh – dùng nguyên ảnh từ AI
+                const watermarkEnabled = document.getElementById('watermark-enabled')?.checked;
+                const watermarkText = document.getElementById('watermark-text')?.value || '';
+                let finalUrl = watermarkEnabled ? await applyWatermark(dataUrl, watermarkText) : dataUrl;
+                
+                const imageIndex = generatedImagesData.length;
+                const fileName = `${baseFileName}_${String(count).padStart(2, '0')}.png`; 
+                const imageData = { url: finalUrl, filename: fileName, angleSpec: angleSpec }; 
+                generatedImagesData.push(imageData);
+                
+                const resultItem = document.createElement('div'); 
+                // Khung hiển thị: luôn dùng class 3:4 để layout grid đẹp
+                const ratioClass = 'aspect-[3/4]';
+                resultItem.className = `result-item relative bg-gray-700 rounded-lg overflow-hidden ${ratioClass}`;
+                resultItem.innerHTML = `
+                    <img src="${finalUrl}" alt="Ảnh AI tạo ${fileName}" class="w-full h-full object-cover" style="animation: fadeIn 0.5s">
+                    <button class="download-btn" title="Tải ảnh (${fileName})"><i class="fa-solid fa-download"></i></button>
+                    <button class="regenerate-btn" title="Tạo lại ảnh này"><i class="fa-solid fa-arrows-rotate"></i></button>
+                    <div class="spinner-overlay absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-10">
+                        <div class="loader !w-8 !h-8 !border-2 !border-t-white"></div>
+                    </div>
+                `;
+                resultItem.querySelector('img').addEventListener('click', () => openLightbox(generatedImagesData, imageIndex));
+                resultItem.querySelector('.download-btn').addEventListener('click', (e) => { e.stopPropagation(); downloadImage(finalUrl, fileName); });
+                resultItem.querySelector('.regenerate-btn').addEventListener('click', (e) => { e.stopPropagation(); regenerateImage(imageIndex); });
+                resultGallery.appendChild(resultItem);
+                
+                if (count === total) { 
+                    isBatchDone = true; 
+                    loadingStatus.textContent = 'Hoàn tất! Bộ ảnh đã sẵn sàng.'; 
+                }
+            };
+
+            try {
+                const [modelDataUrl, productDataUrl] = await Promise.all([ fileToBase64(modelFile), fileToBase64(productFile) ]);
+                const modelBase64 = parseDataUrl(modelDataUrl).data;
+                const productBase64 = parseDataUrl(productDataUrl).data;
+                const allBase64Data = { modelBase64, productBase64 };
+
+                const angleList = CURRENT_BATCH_BLUEPRINT?.angleBlueprints || [];
+                if (!angleList.length) throw new Error("Không tìm thấy kịch bản chụp (angleBlueprints).");
+
+                await runQueue(angleList, controller.signal, onImageGenerated, allBase64Data);
+                
+                if (controller.signal.aborted) throw new Error('Đã dừng theo yêu cầu.');
+                
+            } catch (error) {
+                errorText.textContent = `Đã xảy ra lỗi: ${error.message || 'Lỗi không xác định.'}`;
+                errorMessage.classList.remove('hidden');
+            } finally {
+                progressBarContainer.classList.add('hidden');
+                cancelBtn.classList.add('hidden');
+                generateBtn.classList.remove('hidden');
+                generateBtn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles mr-2"></i> Tạo Bộ Ảnh';
+
+                document.querySelectorAll('input, select, textarea, button').forEach(el => el.disabled = false);
+                updateGenerateAvailability();
+            }
+        });
+    </script>
+</body>
+</html>
